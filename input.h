@@ -7,177 +7,175 @@ namespace aux
 {
 	enum
 	{
-		KEY_BAD_ENUM = -1,
+		Key_BadEnum = -1,
 
-		// Mouse buttons
-		KEY_MOUSE_LEFT,
-		KEY_MOUSE_RIGHT,
-		KEY_MOUSE_MIDDLE,
-		KEY_MOUSE_X1,
-		KEY_MOUSE_X2,
+		// Mouse Buttons
+		Key_MouseLeft,
+		Key_MouseRight,
+		Key_MouseMiddle,
+		Key_MouseX1,
+		Key_MouseX2,
 
-		// System keys
-		KEY_ESCAPE,
-		KEY_ALT_LEFT,
-		KEY_ALT_RIGHT,
-		KEY_SHIFT_LEFT,
-		KEY_SHIFT_RIGHT,
-		KEY_CONTROL_LEFT,
-		KEY_CONTROL_RIGHT,
-		KEY_COMMAND_LEFT,
-		KEY_COMMAND_RIGHT,
-		KEY_CAPS_LOCK,
-		KEY_SCROLL_LOCK,
-		KEY_PAUSE,
-		KEY_BREAK,
-		KEY_SNAPSHOT,
-		KEY_APPLICATION,
-		KEY_SYSRQ,
+		// System Keys
+		Key_Escape,
+		Key_AltLeft,
+		Key_AltRight,
+		Key_ShiftLeft,
+		Key_ShiftRight,
+		Key_ControlLeft,
+		Key_ControlRight,
+		Key_CommandLeft,
+		Key_CommandRight,
+		Key_CapsLock,
+		Key_ScrollLock,
+		Key_Pause,
+		Key_Break,
+		Key_Snapshot,
+		Key_Application,
+		Key_SysReq,
 
-		// Navigation keys
-		KEY_ARROW_LEFT,
-		KEY_ARROW_RIGHT,
-		KEY_ARROW_UP,
-		KEY_ARROW_DOWN,
-		KEY_HOME,
-		KEY_END,
-		KEY_PAGE_UP,
-		KEY_PAGE_DOWN,
+		// Navigation Keys
+		Key_ArrowLeft,
+		Key_ArrowRight,
+		Key_ArrowUp,
+		Key_ArrowDown,
+		Key_Home,
+		Key_End,
+		Key_PageUp,
+		Key_PageDown,
 
-		// Editing keys
-		KEY_INSERT,
-		KEY_DELETE,
-		KEY_BACKSPACE,
-		KEY_ENTER,
+		// Editing Keys
+		Key_Insert,
+		Key_Delete,
+		Key_Backspace,
+		Key_Enter,
 
-		// Punctuation keys
-		KEY_SPACE,
-		KEY_TAB,
-		KEY_COMMA,
-		KEY_PERIOD,
-		KEY_APOSTROPHE,
-		KEY_BACKTICK,
-		KEY_SEMICOLON,
-		KEY_SLASH,
-		KEY_BACKSLASH,
-		KEY_BRACKET_LEFT,
-		KEY_BRACKET_RIGHT,
-		KEY_MINUS,
-		KEY_EQUALS,
+		// Punctuation Keys
+		Key_Space,
+		Key_Tab,
+		Key_Comma,
+		Key_Period,
+		Key_Apostrophe,
+		Key_Backtick,
+		Key_Semicolon,
+		Key_Slash,
+		Key_Backslash,
+		Key_BracketLeft,
+		Key_BracketRight,
+		Key_Minus,
+		Key_Equals,
 
-		// Alphabetic keys
-		KEY_A,
-		KEY_B,
-		KEY_C,
-		KEY_D,
-		KEY_E,
-		KEY_F,
-		KEY_G,
-		KEY_H,
-		KEY_I,
-		KEY_J,
-		KEY_K,
-		KEY_L,
-		KEY_M,
-		KEY_N,
-		KEY_O,
-		KEY_P,
-		KEY_Q,
-		KEY_R,
-		KEY_S,
-		KEY_T,
-		KEY_U,
-		KEY_V,
-		KEY_W,
-		KEY_X,
-		KEY_Y,
-		KEY_Z,
+		// Alphabetic Keys
+		Key_A,
+		Key_B,
+		Key_C,
+		Key_D,
+		Key_E,
+		Key_F,
+		Key_G,
+		Key_H,
+		Key_I,
+		Key_J,
+		Key_K,
+		Key_L,
+		Key_M,
+		Key_N,
+		Key_O,
+		Key_P,
+		Key_Q,
+		Key_R,
+		Key_S,
+		Key_T,
+		Key_U,
+		Key_V,
+		Key_W,
+		Key_X,
+		Key_Y,
+		Key_Z,
 
-		// Digital keys
-		KEY_0,
-		KEY_1,
-		KEY_2,
-		KEY_3,
-		KEY_4,
-		KEY_5,
-		KEY_6,
-		KEY_7,
-		KEY_8,
-		KEY_9,
+		// Digital Keys
+		Key_0,
+		Key_1,
+		Key_2,
+		Key_3,
+		Key_4,
+		Key_5,
+		Key_6,
+		Key_7,
+		Key_8,
+		Key_9,
 
-		// Functional keys
-		KEY_F1,
-		KEY_F2,
-		KEY_F3,
-		KEY_F4,
-		KEY_F5,
-		KEY_F6,
-		KEY_F7,
-		KEY_F8,
-		KEY_F9,
-		KEY_F10,
-		KEY_F11,
-		KEY_F12,
+		// Functional Keys
+		Key_F1,
+		Key_F2,
+		Key_F3,
+		Key_F4,
+		Key_F5,
+		Key_F6,
+		Key_F7,
+		Key_F8,
+		Key_F9,
+		Key_F10,
+		Key_F11,
+		Key_F12,
 
-		// Numeric pad keys
-		KEY_NUM_LOCK,
-		KEY_NUM0,
-		KEY_NUM1,
-		KEY_NUM2,
-		KEY_NUM3,
-		KEY_NUM4,
-		KEY_NUM5,
-		KEY_NUM6,
-		KEY_NUM7,
-		KEY_NUM8,
-		KEY_NUM9,
-		KEY_NUM_PLUS,
-		KEY_NUM_MINUS,
-		KEY_NUM_MULTIPLY,
-		KEY_NUM_DIVIDE,
-		KEY_NUM_CLEAR,
-		KEY_NUM_DELETE,
-		KEY_NUM_DECIMAL,
-		KEY_NUM_INSERT,
-		KEY_NUM_ENTER,
+		// Numeric Pad Keys
+		Key_NumLock,
+		Key_Num0,
+		Key_Num1,
+		Key_Num2,
+		Key_Num3,
+		Key_Num4,
+		Key_Num5,
+		Key_Num6,
+		Key_Num7,
+		Key_Num8,
+		Key_Num9,
+		Key_NumPlus,
+		Key_NumMinus,
+		Key_NumMultiply,
+		Key_NumDivide,
+		Key_NumClear,
+		Key_NumDelete,
+		Key_NumDecimal,
+		Key_NumInsert,
+		Key_NumEnter,
 
-		// Other keys
-		KEY_OEM102,
+		// Other Keys
+		Key_Oem102,
 
-		KEY_MAX_ENUMS
+		Key_MaxEnums
 	};
 
-	struct cursor_t;
+	typedef struct CursorImpl* CursorHandle;
 
-	struct input_caps_t
+	struct InputCaps
 	{
-		i32_t max_cursor_dim;
+		int32 maxCursorDimension;
 	};
 
-	struct input_handler_t
+	struct InputHandler
 	{
-		void* user_ptr;
-		void(*on_key_down)(void* user_ptr, e32_t key);
-		void(*on_key_up)(void* user_ptr, e32_t key);
-		void(*on_double_click)(void* user_ptr, e32_t key);
-		void(*on_mouse_move)(void* user_ptr, const point2_t& pos);
-		void(*on_mouse_scroll)(void* user_ptr, i32_t pos);
+		void* userPtr;
+		void(*OnKeyDown)(void* userPtr, enum32 key);
+		void(*OnKeyUp)(void* userPtr, enum32 key);
+		void(*OnDoubleClick)(void* userPtr, enum32 key);
+		void(*OnMouseMove)(void* userPtr, const Point2& position);
+		void(*OnMouseScroll)(void* userPtr, int32 position);
 	};
 
-	const input_caps_t& get_input_caps();
+	const InputCaps& Input_GetCaps();
 
-	bool is_key_down(e32_t key);
-	bool is_key_on(e32_t key);
+	bool Input_IsKeyDown(enum32 key);
+	bool Input_IsKeyOn(enum32 key);
 
-	const point2_t& get_mouse_pos();
-	void set_mouse_pos(i32_t x, i32_t y);
-	void set_mouse_pos(const point2_t& pos);
+	const Point2& Input_GetMousePosition();
+	void Input_PlaceMouse(const Point2& position);
 
-	cursor_t* create_cursor(i32_t width, i32_t height, i32_t hot_x, i32_t hot_y, const void* data);
-	cursor_t* create_cursor(const size2_t& size, const point2_t& hot_spot, const void* data);
-	void destroy_cursor(cursor_t* cursor);
-	void set_cursor(cursor_t* cursor);
-	void set_default_cursor();
+	CursorHandle Input_CreateCursor(const Size2& size, const Point2& hotSpot, const void* data);
+	void Input_DestroyCursor(CursorHandle cursor);
+	void Input_SetCursor(CursorHandle cursor);
+	void Input_SetDefaultCursor();
 
-	extern input_handler_t input_handler;
+	extern InputHandler inputHandler;
 }

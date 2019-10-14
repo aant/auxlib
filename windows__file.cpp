@@ -13,10 +13,10 @@ namespace aux
 {
 	#pragma pack(1)
 
-	struct file_t
+	struct FileImpl
 	{
 		HANDLE handle;
-		e32_t mode;
+		enum32 mode;
 	};
 
 	#pragma pack()
@@ -27,18 +27,18 @@ namespace aux
 	//
 	///////////////////////////////////////////////////////////
 
-	static file_t* open_ll(const char name[], e32_t mode, DWORD access_mode, DWORD share_mode, DWORD disposition)
+	static FileHandle LL_OpenFile(const char name[], enum32 mode, DWORD accessMode, DWORD shareMode, DWORD disposition)
 	{
-		u16_t* name16 = to_utf16((const u8_t*)name, false);
+		uint16* name16 = Unicode_Utf8to16((const uint8*)name, false);
 
 		if (name16 != nullptr)
 		{
-			HANDLE handle = CreateFileW((const wchar_t*)name16, access_mode, share_mode, nullptr, disposition, FILE_ATTRIBUTE_NORMAL, nullptr);
-			free_utf(name16);
+			HANDLE handle = CreateFileW((const wchar_t*)name16, accessMode, shareMode, nullptr, disposition, FILE_ATTRIBUTE_NORMAL, nullptr);
+			Unicode_Free(name16);
 
 			if (handle != INVALID_HANDLE_VALUE)
 			{
-				file_t* file = (file_t*)alloc_mem(sizeof(file_t));
+				FileHandle file = (FileHandle)Memory_Allocate(sizeof(FileImpl));
 				file->handle = handle;
 				file->mode = mode;
 				return file;
@@ -48,11 +48,11 @@ namespace aux
 		return nullptr;
 	}
 
-	static bool seek_ll(file_t* file, DWORD move_method, i64_t offset)
+	static bool LL_SeekFile(FileHandle file, DWORD moveMethod, int64 offset)
 	{
 		LARGE_INTEGER pos;
 		pos.QuadPart = offset;
-		return (bool)SetFilePointerEx(file->handle, pos, nullptr, move_method);
+		return (bool)SetFilePointerEx(file->handle, pos, nullptr, moveMethod);
 	}
 
 	///////////////////////////////////////////////////////////
@@ -61,7 +61,7 @@ namespace aux
 	//
 	///////////////////////////////////////////////////////////
 
-	i64_t get_file_size(const file_t* file)
+	int64 File_GetSize(const FileHandle file)
 	{
 		LARGE_INTEGER size;
 
@@ -73,10 +73,9 @@ namespace aux
 		return -1;
 	}
 
-	i64_t get_file_pos(const file_t* file)
+	int64 File_GetPosition(const FileHandle file)
 	{
-		LARGE_INTEGER pos;
-		pos.QuadPart = 0;
+		LARGE_INTEGER pos = {};
 
 		if (SetFilePointerEx(file->handle, pos, &pos, FILE_BEGIN))
 		{
@@ -86,89 +85,89 @@ namespace aux
 		return -1;
 	}
 
-	file_t* open_file(const char name[], e32_t mode)
+	FileHandle File_Open(const char name[], enum32 mode)
 	{
 		switch (mode)
 		{
-			case FILE_MODE_READ:
-				return open_ll(name, mode, FILE_READ_DATA, FILE_SHARE_READ, OPEN_EXISTING);
-			case FILE_MODE_WRITE:
-				return open_ll(name, mode, FILE_WRITE_DATA, FILE_SHARE_READ, CREATE_ALWAYS);
-			case FILE_MODE_APPEND:
-				return open_ll(name, mode, FILE_APPEND_DATA, FILE_SHARE_READ, OPEN_ALWAYS);
-			case FILE_MODE_READ_WRITE:
-				return open_ll(name, mode, FILE_READ_DATA | FILE_WRITE_DATA, FILE_SHARE_READ, OPEN_ALWAYS);
+			case FileMode_Read:
+				return LL_OpenFile(name, mode, FILE_READ_DATA, FILE_SHARE_READ, OPEN_EXISTING);
+			case FileMode_Write:
+				return LL_OpenFile(name, mode, FILE_WRITE_DATA, FILE_SHARE_READ, CREATE_ALWAYS);
+			case FileMode_Append:
+				return LL_OpenFile(name, mode, FILE_APPEND_DATA, FILE_SHARE_READ, OPEN_ALWAYS);
+			case FileMode_ReadWrite:
+				return LL_OpenFile(name, mode, FILE_READ_DATA | FILE_WRITE_DATA, FILE_SHARE_READ, OPEN_ALWAYS);
 			default:
 				return nullptr;
 		}
 	}
 
-	void close_file(file_t* file)
+	void File_Close(FileHandle file)
 	{
 		CloseHandle(file->handle);
-		free_mem(file);
+		Memory_Free(file);
 	}
 
-	u32_t read_file(file_t* file, u32_t size, void* data)
+	uint32 File_Read(FileHandle file, uint32 size, void* data)
 	{
 		AUX_DEBUG_ASSERT(size > 0);
 		AUX_DEBUG_ASSERT(data != nullptr);
-		AUX_DEBUG_ASSERT((file->mode == FILE_MODE_READ) || (file->mode == FILE_MODE_READ_WRITE));
+		AUX_DEBUG_ASSERT((file->mode == FileMode_Read) || (file->mode == FileMode_ReadWrite));
 
-		DWORD bytes_read;
+		DWORD bytesRead;
 
-		if (ReadFile(file->handle, data, (DWORD)size, &bytes_read, nullptr))
+		if (ReadFile(file->handle, data, (DWORD)size, &bytesRead, nullptr))
 		{
-			return (u32_t)bytes_read;
+			return (uint32)bytesRead;
 		}
 
 		return 0;
 	}
 
-	u32_t write_file(file_t* file, u32_t size, const void* data)
+	uint32 File_Write(FileHandle file, uint32 size, const void* data)
 	{
 		AUX_DEBUG_ASSERT(size > 0);
 		AUX_DEBUG_ASSERT(data != nullptr);
-		AUX_DEBUG_ASSERT((file->mode == FILE_MODE_WRITE) || (file->mode == FILE_MODE_APPEND) || (file->mode == FILE_MODE_READ_WRITE));
+		AUX_DEBUG_ASSERT((file->mode == FileMode_Write) || (file->mode == FileMode_Append) || (file->mode == FileMode_ReadWrite));
 
-		DWORD bytes_written;
+		DWORD bytesWritten;
 
-		if (WriteFile(file->handle, data, (DWORD)size, &bytes_written, nullptr))
+		if (WriteFile(file->handle, data, (DWORD)size, &bytesWritten, nullptr))
 		{
-			return (u32_t)bytes_written;
+			return (uint32)bytesWritten;
 		}
 
 		return 0;
 	}
 
-	bool flush_file(file_t* file)
+	bool File_Flush(FileHandle file)
 	{
 		return (bool)FlushFileBuffers(file->handle);
 	}
 
-	bool seek_file(file_t* file, e32_t origin, i64_t offset)
+	bool File_Seek(FileHandle file, enum32 origin, int64 offset)
 	{
 		switch (origin)
 		{
-			case FILE_SEEK_BEGIN:
-				return seek_ll(file, FILE_BEGIN, offset);
-			case FILE_SEEK_END:
-				return seek_ll(file, FILE_END, offset);
-			case FILE_SEEK_CURRENT:
-				return seek_ll(file, FILE_CURRENT, offset);
+			case FileSeek_Begin:
+				return LL_SeekFile(file, FILE_BEGIN, offset);
+			case FileSeek_End:
+				return LL_SeekFile(file, FILE_END, offset);
+			case FileSeek_Current:
+				return LL_SeekFile(file, FILE_CURRENT, offset);
 			default:
 				return false;
 		}
 	}
 
-	bool is_file_exist(const char name[])
+	bool File_IsExist(const char name[])
 	{
-		u16_t* name16 = to_utf16((const u8_t*)name, false);
+		uint16* name16 = Unicode_Utf8to16((const uint8*)name, false);
 
 		if (name16 != nullptr)
 		{
 			DWORD attrib = GetFileAttributesW((const wchar_t*)name16);
-			free_utf(name16);
+			Unicode_Free(name16);
 
 			if (attrib != INVALID_FILE_ATTRIBUTES)
 			{
@@ -179,45 +178,45 @@ namespace aux
 		return false;
 	}
 
-	bool delete_file(const char name[])
+	bool File_Delete(const char name[])
 	{
-		u16_t* name16 = to_utf16((const u8_t*)name, false);
+		uint16* name16 = Unicode_Utf8to16((const uint8*)name, false);
 
 		if (name16 != nullptr)
 		{
 			if (DeleteFileW((const wchar_t*)name16))
 			{
-				free_utf(name16);
+				Unicode_Free(name16);
 				return true;
 			}
 
-			free_utf(name16);
+			Unicode_Free(name16);
 		}
 
 		return false;
 	}
 
-	bool rename_file(const char name_old[], const char name_new[])
+	bool File_Rename(const char nameOld[], const char nameNew[])
 	{
-		u16_t* name_old16 = to_utf16((const u8_t*)name_old, false);
+		uint16* nameOld16 = Unicode_Utf8to16((const uint8*)nameOld, false);
 
-		if (name_old16 != nullptr)
+		if (nameOld16 != nullptr)
 		{
-			u16_t* name_new16 = to_utf16((const u8_t*)name_new, false);
+			uint16* nameNew16 = Unicode_Utf8to16((const uint8*)nameNew, false);
 
-			if (name_new16 != nullptr)
+			if (nameNew16 != nullptr)
 			{
-				if (MoveFileW((const wchar_t*)name_old16, (const wchar_t*)name_new16))
+				if (MoveFileW((const wchar_t*)nameOld16, (const wchar_t*)nameNew16))
 				{
-					free_utf(name_new16);
-					free_utf(name_old16);
+					Unicode_Free(nameNew16);
+					Unicode_Free(nameOld16);
 					return true;
 				}
 
-				free_utf(name_new16);
+				Unicode_Free(nameNew16);
 			}
 
-			free_utf(name_old16);
+			Unicode_Free(nameOld16);
 		}
 
 		return false;

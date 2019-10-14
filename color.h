@@ -6,10 +6,12 @@ namespace aux
 {
 	#pragma pack(1)
 
-	struct Size2
+	struct Color
 	{
-		int32 x;
-		int32 y;
+		float32 r;
+		float32 g;
+		float32 b;
+		float32 a;
 	};
 
 	#pragma pack()

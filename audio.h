@@ -18,28 +18,28 @@ namespace aux
 	struct sound_buffer_t;
 	struct sound_t;
 
-	struct audio_caps_t
+	struct AudioCaps
 	{
-		i32_t max_buffer_size;
-		i32_t min_sample_rate;
-		i32_t max_sample_rate;
+		int32 maxBufferSize;
+		int32 minSampleRate;
+		int32 maxSampleRate;
 	};
 
-	void get_audio_caps(audio_caps_t& caps);
+	void Audio_GetCaps(AudioCaps& caps);
 
-	f32_t get_sound_group_gain(e32_t group);
-	void set_sound_group_gain(e32_t group, f32_t gain);
-	void suspend_sound_group(e32_t group);
-	void resume_sound_group(e32_t group);
+	float32 get_sound_group_gain(enum32 group);
+	void set_sound_group_gain(enum32 group, float32 gain);
+	void suspend_sound_group(enum32 group);
+	void resume_sound_group(enum32 group);
 
-	i32_t get_sound_buffer_size(const sound_buffer_t* buffer);
-	sound_buffer_t* create_sound_buffer(i32_t sample_rate, i32_t sample_count, const void* data = nullptr);
+	int32 get_sound_buffer_size(const sound_buffer_t* buffer);
+	sound_buffer_t* create_sound_buffer(int32 sample_rate, int32 sample_count, const void* data = nullptr);
 	void destroy_sound_buffer(sound_buffer_t* buffer);
-	void update_sound_buffer(sound_buffer_t* buffer, i32_t offset, i32_t size, const void* data);
+	void update_sound_buffer(sound_buffer_t* buffer, int32 offset, int32 size, const void* data);
 
-	f32_t get_sound_pos(const sound_t* sound);
-	u32_t get_sound_len(const sound_t* sound);
-	sound_t* create_sound(e32_t group);
+	float32 get_sound_pos(const sound_t* sound);
+	uint32 get_sound_len(const sound_t* sound);
+	sound_t* create_sound(enum32 group);
 	void destroy_sound(sound_t* sound);
 	void set_sound_buffer(sound_t* sound, sound_buffer_t* buffer);
 	void play_sound(sound_t* sound);

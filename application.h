@@ -6,36 +6,33 @@ namespace aux
 {
 	enum
 	{
-		APP_STYLE_BAD_ENUM = -1,
+		AppStyle_BadEnum = -1,
 
-		APP_STYLE_FULLSCREEN,
-		APP_STYLE_FIXED_WINDOW,
-		APP_STYLE_RESIZABLE_WINDOW,
+		AppStyle_Fullscreen,
+		AppStyle_FixedWindow,
+		AppStyle_ResizableWindow,
 
-		APP_STYLE_MAX_ENUMS,
+		AppStyle_MaxEnums,
 	};
 
-	struct app_handler_t
+	struct ApplicationHandler
 	{
-		void* user_ptr;
-		bool(*on_init)(void* user_ptr);
-		void(*on_free)(void* user_ptr);
-		void(*on_sleep)(void* user_ptr);
-		void(*on_awake)(void* user_ptr);
-		void(*on_update)(void* user_ptr, f32_t dt_sec);
-		void(*on_resize)(void* user_ptr, const size2_t& res);
-		void(*on_redraw)(void* user_ptr);
+		void* userPtr;
+		bool(*OnInit)(void* userPtr);
+		void(*OnFree)(void* userPtr);
+		void(*OnSleep)(void* userPtr);
+		void(*OnAwake)(void* userPtr);
+		void(*OnUpdate)(void* userPtr, float32 timeDelta);
+		void(*OnResize)(void* userPtr, const Size2& resolution);
+		void(*OnRedraw)(void* userPtr);
 	};
 
-	e32_t get_app_style();
-	const size2_t& get_app_res();
+	enum32 Application_GetStyle();
+	const Size2& Application_GetResolution();
 
-	void start_app(const char title[], e32_t style, i32_t res_x, i32_t res_y);
-	void start_app(const char title[], e32_t style, const size2_t& res);
-	void close_app();
+	void Application_Start(const char title[], enum32 style, const Size2& resolution);
+	void Application_Close();
+	void Application_Reshape(enum32 style, const Size2& resolution);
 
-	void reshape_app(e32_t style, i32_t res_x, i32_t res_y);
-	void reshape_app(e32_t style, const size2_t& res);
-
-	extern app_handler_t app_handler;
+	extern ApplicationHandler applicationHandler;
 }

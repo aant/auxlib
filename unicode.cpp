@@ -4,10 +4,10 @@ namespace aux
 {
 	enum
 	{
-		MAX_STRLEN = INT16_MAX
+		MaxStrlen = INT16_MAX
 	};
 
-	static const i8_t utf8_seq_lens[] =
+	static const int8 utf8SeqLens[] =
 	{
 		-1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -33,66 +33,66 @@ namespace aux
 	//
 	///////////////////////////////////////////////////////////
 
-	static u32_t seq2_to_char(const u8_t seq[])
+	static uint32 LL_Seq2ToChar(const uint8 seq[])
 	{
-		return (((u32_t)seq[0] & 0x1f) << 6) | (seq[1] & 0x3f);
+		return (((uint32)seq[0] & 0x1f) << 6) | (seq[1] & 0x3f);
 	}
 
-	static u32_t seq3_to_char(const u8_t seq[])
+	static uint32 LL_Seq3ToChar(const uint8 seq[])
 	{
-		return (((u32_t)seq[0] & 0xf) << 12) | (((u32_t)seq[1] & 0x3f) << 6) | (seq[2] & 0x3f);
+		return (((uint32)seq[0] & 0xf) << 12) | (((uint32)seq[1] & 0x3f) << 6) | (seq[2] & 0x3f);
 	}
 
-	static u32_t seq4_to_char(const u8_t seq[])
+	static uint32 LL_Seq4ToChar(const uint8 seq[])
 	{
-		return (((u32_t)seq[0] & 0x7) << 18) | (((u32_t)seq[1] & 0x3f) << 12) | (((u32_t)seq[2] & 0x3f) << 6) | (seq[3] & 0x3f);
+		return (((uint32)seq[0] & 0x7) << 18) | (((uint32)seq[1] & 0x3f) << 12) | (((uint32)seq[2] & 0x3f) << 6) | (seq[3] & 0x3f);
 	}
 
-	static bool is_octet_ok(u8_t octet)
+	static bool LL_IsOctetOk(uint8 octet)
 	{
 		return (octet & 0xc0) == 0x80;
 	}
 
-	static void get_char(const u8_t seq[], i32_t& seq_len, u32_t& out_char, u32_t bad_char)
+	static void LL_GetChar(const uint8 seq[], int32& seqLen, uint32& outChar, uint32 badChar)
 	{
-		switch (seq_len)
+		switch (seqLen)
 		{
 			case 1:
-				out_char = seq[0];
+				outChar = seq[0];
 				return;
 			case 2:
-				if (is_octet_ok(seq[1]))
+				if (LL_IsOctetOk(seq[1]))
 				{
-					out_char = seq2_to_char(seq);
+					outChar = LL_Seq2ToChar(seq);
 					return;
 				}
 				break;
 			case 3:
-				if (is_octet_ok(seq[1]) && is_octet_ok(seq[2]))
+				if (LL_IsOctetOk(seq[1]) && LL_IsOctetOk(seq[2]))
 				{
-					out_char = seq3_to_char(seq);
+					outChar = LL_Seq3ToChar(seq);
 					return;
 				}
 				break;
 			case 4:
-				if (is_octet_ok(seq[1]) && is_octet_ok(seq[2]) && is_octet_ok(seq[3]))
+				if (LL_IsOctetOk(seq[1]) && LL_IsOctetOk(seq[2]) && LL_IsOctetOk(seq[3]))
 				{
-					out_char = seq4_to_char(seq);
+					outChar = LL_Seq4ToChar(seq);
 					return;
 				}
 				break;
 		}
 
-		seq_len = 1;
-		out_char = bad_char;
+		seqLen = 1;
+		outChar = badChar;
 	}
 
-	static i32_t get_seq_len(const u8_t seq[])
+	static int32 LL_GetSeqLen(const uint8 seq[])
 	{
-		return utf8_seq_lens[*seq];
+		return utf8SeqLens[*seq];
 	}
 
-	static i32_t get_seq_len16(u32_t c32)
+	static int32 LL_GetSeqLen16(uint32 c32)
 	{
 		if (c32 < 0x10000)
 		{
@@ -112,35 +112,35 @@ namespace aux
 		return 0;
 	}
 
-	static i32_t calc_len16(const u8_t utf8[], u32_t bad_char)
+	static int32 LL_CalcLen16(const uint8 utf8[], uint32 badChar)
 	{
-		i32_t seq_len8 = get_seq_len(utf8);
-		i32_t seq_len16 = 0;
-		i32_t len = 0;
-		u32_t c32 = 0;
+		int32 seqLen8 = LL_GetSeqLen(utf8);
+		int32 seqLen16 = 0;
+		int32 len = 0;
+		uint32 c32 = 0;
 
-		while (seq_len8 >= 0)
+		while (seqLen8 >= 0)
 		{
-			get_char(utf8, seq_len8, c32, bad_char);
-			seq_len16 = get_seq_len16(c32);
+			LL_GetChar(utf8, seqLen8, c32, badChar);
+			seqLen16 = LL_GetSeqLen16(c32);
 
-			if (seq_len16 < 1)
+			if (seqLen16 < 1)
 			{
 				break;
 			}
 
-			utf8 += seq_len8;
-			len += seq_len16;
+			utf8 += seqLen8;
+			len += seqLen16;
 
-			if (len == MAX_STRLEN)
+			if (len == MaxStrlen)
 			{
 				return len;
 			}
 
-			seq_len8 = get_seq_len(utf8);
+			seqLen8 = LL_GetSeqLen(utf8);
 		}
 
-		if (seq_len8 < 0)
+		if (seqLen8 < 0)
 		{
 			return len;
 		}
@@ -148,41 +148,41 @@ namespace aux
 		return 0;
 	}
 
-	static void convert(const u8_t utf8[], u16_t utf16[], u32_t bad_char)
+	static void LL_Convert(const uint8 utf8[], uint16 utf16[], uint32 badChar)
 	{
-		i32_t seq_len8 = get_seq_len(utf8);
-		i32_t seq_len16 = 0;
-		i32_t len = 0;
-		u32_t c32 = 0;
+		int32 seqLen8 = LL_GetSeqLen(utf8);
+		int32 seqLen16 = 0;
+		int32 len = 0;
+		uint32 c32 = 0;
 
-		while (seq_len8 >= 0)
+		while (seqLen8 >= 0)
 		{
-			get_char(utf8, seq_len8, c32, bad_char);
-			seq_len16 = get_seq_len16(c32);
+			LL_GetChar(utf8, seqLen8, c32, badChar);
+			seqLen16 = LL_GetSeqLen16(c32);
 
-			if (seq_len16 == 1)
+			if (seqLen16 == 1)
 			{
-				*utf16 = (u16_t)c32;
+				*utf16 = (uint16)c32;
 				++utf16;
 			}
 			else
 			{
-				u32_t t = c32 - 0x10000;
-				*utf16 = (u16_t)((t >> 10) + 0xd800);
+				uint32 t = c32 - 0x10000;
+				*utf16 = (uint16)((t >> 10) + 0xd800);
 				++utf16;
-				*utf16 = (u16_t)((t & 0x3ff) + 0xdc00);
+				*utf16 = (uint16)((t & 0x3ff) + 0xdc00);
 				++utf16;
 			}
 
-			utf8 += seq_len8;
-			len += seq_len16;
+			utf8 += seqLen8;
+			len += seqLen16;
 
-			if (len == MAX_STRLEN)
+			if (len == MaxStrlen)
 			{
 				break;
 			}
 
-			seq_len8 = get_seq_len(utf8);
+			seqLen8 = LL_GetSeqLen(utf8);
 		}
 	}
 
@@ -192,7 +192,7 @@ namespace aux
 	//
 	///////////////////////////////////////////////////////////
 
-	u16_t* to_utf16(const u8_t utf8[], bool replace_bad_sequences)
+	uint16* Unicode_Utf8to16(const uint8 utf8[], bool replaceBadSequences)
 	{
 		// skip bom
 		if ((utf8[0] == 0xef) && (utf8[1] == 0xbb) && (utf8[2] == 0xbf))
@@ -200,23 +200,23 @@ namespace aux
 			utf8 += 3;
 		}
 
-		u32_t bad_char;
+		uint32 badChar;
 
-		if (replace_bad_sequences)
+		if (replaceBadSequences)
 		{
-			bad_char = 0xfffd;
+			badChar = 0xfffd;
 		}
 		else
 		{
-			bad_char = UINT32_MAX;
+			badChar = UINT32_MAX;
 		}
 
-		i32_t len16 = calc_len16(utf8, bad_char);
+		int32 len16 = LL_CalcLen16(utf8, badChar);
 
 		if (len16 > 0)
 		{
-			u16_t* utf16 = (u16_t*)alloc_mem(((size_t)len16 + 1) * sizeof(u16_t));
-			convert(utf8, utf16, bad_char);
+			uint16* utf16 = (uint16*)Memory_Allocate(((size_t)len16 + 1) * sizeof(uint16));
+			LL_Convert(utf8, utf16, badChar);
 			utf16[len16] = 0;
 			return utf16;
 		}
@@ -224,14 +224,8 @@ namespace aux
 		return nullptr;
 	}
 
-	u8_t* to_utf8(const u16_t utf16[])
+	void Unicode_Free(void* utf)
 	{
-		(void)utf16;
-		throw "Is not implemented";
-	}
-
-	void free_utf(void* utf)
-	{
-		free_mem(utf);
+		Memory_Free(utf);
 	}
 }

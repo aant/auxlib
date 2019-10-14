@@ -10,13 +10,13 @@
 
 namespace aux
 {
-	struct thread_state_t
+	struct ThreadState
 	{
-		i32_t(*handler)(void* user_ptr);
-		void* user_ptr;
+		ThreadHandler handler;
+		void* userPtr;
 	};
 
-	struct thread_t
+	struct ThreadImpl
 	{
 		HANDLE handle;
 	};
@@ -27,7 +27,7 @@ namespace aux
 	//
 	///////////////////////////////////////////////////////////
 
-	static DWORD valid_timeout(u32_t msec)
+	static DWORD LL_GetTimeout(uint32 msec)
 	{
 		if (msec == 0)
 		{
@@ -42,11 +42,11 @@ namespace aux
 		return (DWORD)msec;
 	}
 
-	static DWORD handle_thread_ll(thread_state_t& state)
+	static DWORD LL_HandleThread(ThreadState& state)
 	{
 		__try
 		{
-			return (DWORD)state.handler(state.user_ptr);
+			return (DWORD)state.handler(state.userPtr);
 		}
 		__except (EXCEPTION_EXECUTE_HANDLER)
 		{
@@ -55,14 +55,14 @@ namespace aux
 		return (DWORD)-1;
 	}
 
-	__declspec(nothrow) static DWORD WINAPI on_thread(LPVOID param)
+	__declspec(nothrow) static DWORD WINAPI LL_OnThread(LPVOID param)
 	{
-		thread_state_t state = *(thread_state_t*)param;
-		free_mem(param);
+		ThreadState state = *(ThreadState*)param;
+		Memory_Free(param);
 
 		try
 		{
-			return handle_thread_ll(state);
+			return LL_HandleThread(state);
 		}
 		catch (...)
 		{
@@ -77,20 +77,20 @@ namespace aux
 	//
 	///////////////////////////////////////////////////////////
 
-	thread_t* start_thread(i32_t(*handler)(void* user_ptr), void* user_ptr)
+	ThreadHandle Thread_Start(ThreadHandler handler, void* userPtr)
 	{
 		AUX_DEBUG_ASSERT(handler != nullptr);
 
-		thread_state_t* state = (thread_state_t*)alloc_mem(sizeof(thread_state_t));
+		ThreadState* state = (ThreadState*)Memory_Allocate(sizeof(ThreadState));
 		state->handler = handler;
-		state->user_ptr = user_ptr;
-		HANDLE handle = CreateThread(nullptr, 0, &on_thread, state, CREATE_SUSPENDED, nullptr);
+		state->userPtr = userPtr;
+		HANDLE handle = CreateThread(nullptr, 0, &LL_OnThread, state, CREATE_SUSPENDED, nullptr);
 
 		if (handle != nullptr)
 		{
 			if (ResumeThread(handle) != (DWORD)-1)
 			{
-				thread_t* thread = (thread_t*)alloc_mem(sizeof(thread_t));
+				ThreadHandle thread = (ThreadHandle)Memory_Allocate(sizeof(ThreadImpl));
 				thread->handle = handle;
 				return thread;
 			}
@@ -98,28 +98,28 @@ namespace aux
 			CloseHandle(handle);
 		}
 
-		free_mem(state);
+		Memory_Free(state);
 		return nullptr;
 	}
 
-	void free_thread(thread_t* thread)
+	void Thread_Free(ThreadHandle thread)
 	{
 		CloseHandle(thread->handle);
-		free_mem(thread);
+		Memory_Free(thread);
 	}
 
-	void wait_thread(thread_t* thread)
+	void Thread_Wait(ThreadHandle thread)
 	{
 		WaitForSingleObject(thread->handle, INFINITE);
 	}
 
-	bool wait_thread(thread_t* thread, u32_t timeout_msec)
+	bool Thread_Wait(ThreadHandle thread, uint32 timeout)
 	{
-		return WaitForSingleObject(thread->handle, valid_timeout(timeout_msec)) == WAIT_OBJECT_0;
+		return WaitForSingleObject(thread->handle, LL_GetTimeout(timeout)) == WAIT_OBJECT_0;
 	}
 
-	void suspend_current_thread(u32_t duration_msec)
+	void Thread_SuspendCurrent(uint32 duration)
 	{
-		Sleep(valid_timeout(duration_msec));
+		Sleep(LL_GetTimeout(duration));
 	}
 }

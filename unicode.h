@@ -4,7 +4,6 @@
 
 namespace aux
 {
-	u16_t* to_utf16(const u8_t utf8[], bool replace_bad_sequences);
-	u8_t* to_utf8(const u16_t utf16[]);
-	void free_utf(void* utf);
+	uint16* Unicode_Utf8to16(const uint8 utf8[], bool replaceBadSequences);
+	void Unicode_Free(void* utf);
 }
