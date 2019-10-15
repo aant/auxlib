@@ -4,14 +4,14 @@
 
 namespace aux
 {
-	typedef struct ThreadImpl* ThreadHandle;
-	typedef int32(*ThreadHandler)(void* userPtr);
+	struct thread_t;
+	typedef i32_t(*thread_handler_t)(void* user_ptr);
 
-	ThreadHandle Thread_Start(ThreadHandler handler, void* userPtr = nullptr);
-	void Thread_Free(ThreadHandle thread);
+	thread_t* start_thread(thread_handler_t handler, void* user_ptr = nullptr);
+	void free_thread(thread_t* thread);
 
-	void Thread_Wait(ThreadHandle thread);
-	bool Thread_Wait(ThreadHandle thread, uint32 timeout);
+	void wait_thread(thread_t* thread);
+	bool wait_thread(thread_t* thread, u32_t timeout_msec);
 
-	void Thread_SuspendCurrent(uint32 duration);
+	void suspend_current_thread(u32_t duration_msec);
 }

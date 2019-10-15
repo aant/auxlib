@@ -199,7 +199,7 @@ DEFINE_IID(IXAudio2, 0x8bcf1f58, 0x9fe7, 0x4583, 0x8a, 0xc6, 0xe2, 0xad, 0xc4, 0
 #endif // #if !defined(__cplusplus)
 
 #if defined(__cplusplus)
-#define FWD_DECLARE(x) interface x
+#define FWD_DECLARE(w) interface w
 #else
 #define FWD_DECLARE(x) typedef interface x x
 #endif

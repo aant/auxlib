@@ -2,11 +2,11 @@
 
 namespace aux
 {
-	static const uint64 magick1 = 0x5deece66d;
-	static const uint64 magick2 = 0xb;
-	static const uint32 seedBits = 48;
-	static const uint64 seedMask = ((const uint64)0x1 << seedBits) - 1;
-	static const uint64 defaultSeed = 0x5555555555555555;
+	static const u64_t magick1 = 0x5deece66d;
+	static const u64_t magick2 = 0xb;
+	static const u32_t seed_bits = 48;
+	static const u64_t seed_mask = ((const u64_t)0x1 << seed_bits) - 1;
+	static const u64_t default_seed = 0x5555555555555555;
 
 	///////////////////////////////////////////////////////////
 	//
@@ -14,10 +14,10 @@ namespace aux
 	//
 	///////////////////////////////////////////////////////////
 
-	static uint32 LL_GetNext(uint64& seed, uint32 bits)
+	static u32_t get_next(u64_t& seed, u32_t bits)
 	{
-		seed = (seed * magick1 + magick2) & seedMask;
-		return (uint32)(seed >> (seedBits - bits));
+		seed = (seed * magick1 + magick2) & seed_mask;
+		return (u32_t)(seed >> (seed_bits - bits));
 	}
 
 	///////////////////////////////////////////////////////////
@@ -26,35 +26,33 @@ namespace aux
 	//
 	///////////////////////////////////////////////////////////
 
-	Random::Random()
+	random_t::random_t()
 	{
-		seed = defaultSeed;
+		seed = default_seed;
 	}
 
-	Random::Random(uint64 seed_)
+	random_t::random_t(u64_t seed_)
 	{
 		seed = seed_;
 	}
 
-	int32 Random::GetNext(int32 minimum, int32 maximum)
+	i32_t random_t::get_next(i32_t minimum, i32_t maximum)
 	{
+		(void)minimum;
+		(void)maximum;
 		return 0;
 	}
 
-	float32 Random::GetNext(float32 minimum, float32 maximum)
+	f32_t random_t::get_next(f32_t minimum, f32_t maximum)
 	{
+		(void)minimum;
+		(void)maximum;
 		return 0.0f;
 	}
 
-	uint32 Random::GetNext(uint32 maximum)
+	u32_t random_t::get_next(u32_t maximum)
 	{
-		AUX_DEBUG_ASSERT(maximum > 0);
-
-		if (maximum < UINT32_MAX)
-		{
-			return LL_GetNext(seed, 32) % maximum;
-		}
-
-		return LL_GetNext(seed, 32);
+		(void)maximum;
+		return 0;
 	}
 }

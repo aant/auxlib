@@ -6,42 +6,42 @@ namespace aux
 {
 	enum
 	{
-		FileMode_BadEnum = -1,
+		FILE_MODE_BAD_ENUM = -1,
 
-		FileMode_Read,
-		FileMode_Write,
-		FileMode_Append,
-		FileMode_ReadWrite,
+		FILE_MODE_READ,
+		FILE_MODE_WRITE,
+		FILE_MODE_APPEND,
+		FILE_MODE_READ_WRITE,
 
-		FileMode_MaxEnums
+		FILE_MODE_MAX_ENUMS
 	};
 
 	enum
 	{
-		FileSeek_BadEnum = -1,
+		FILE_SEEK_BAD_ENUM = -1,
 
-		FileSeek_Begin,
-		FileSeek_End,
-		FileSeek_Current,
+		FILE_SEEK_BEGIN,
+		FILE_SEEK_END,
+		FILE_SEEK_CURRENT,
 
-		FileSeek_MaxEnums
+		FILE_SEEK_MAX_ENUMS
 	};
 
-	typedef struct FileImpl* FileHandle;
+	struct file_t;
 
-	int64 File_GetSize(const FileHandle file);
-	int64 File_GetPosition(const FileHandle file);
+	i64_t get_file_size(const file_t* file);
+	i64_t get_file_pos(const file_t* file);
 
-	FileHandle File_Open(const char name[], enum32 mode);
-	void File_Close(FileHandle file);
+	file_t* open_file(const char name[], e32_t mode);
+	void close_file(file_t* file);
 
-	uint32 File_Read(FileHandle file, uint32 size, void* data);
-	uint32 File_Write(FileHandle file, uint32 size, const void* data);
-	bool File_Flush(FileHandle file);
+	u32_t read_file(file_t* file, u32_t size, void* data);
+	u32_t write_file(file_t* file, u32_t size, const void* data);
+	bool flush_file(file_t* file);
 
-	bool File_Seek(FileHandle file, enum32 origin, int64 offset);
+	bool seek_file(file_t* file, e32_t origin, i64_t offset);
 
-	bool File_IsExist(const char name[]);
-	bool File_Delete(const char name[]);
-	bool File_Rename(const char nameOld[], const char nameNew[]);
+	bool is_file_exist(const char name[]);
+	bool delete_file(const char name[]);
+	bool rename_file(const char name_old[], const char name_new[]);
 }

@@ -6,10 +6,10 @@ namespace aux
 {
 	#pragma pack(1)
 
-	struct Size2
+	struct size2_t
 	{
-		int32 x;
-		int32 y;
+		i32_t w;
+		i32_t h;
 	};
 
 	#pragma pack()

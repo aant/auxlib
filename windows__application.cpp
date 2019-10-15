@@ -1,6 +1,5 @@
 #include "application.h"
 #include "unicode.h"
-#include "point2.h"
 
 #pragma warning(push, 0)
 
@@ -18,42 +17,44 @@
 
 namespace aux
 {
-	static const wchar_t Window_ClassName[] = L"52C61109D294F5D9F2C1557ED617368";
+	static const wchar_t class_name[] = L"52C61109D294F5D9F2C1557ED617368";
 
-	static const int32 Window_MinClientSize = 240;
+	static const DWORD style_fullscreen = WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP;
+	static const DWORD style_fixed_border = WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX;
+	static const DWORD style_resizable_border = WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU | WS_CAPTION | WS_SIZEBOX | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
 
-	static const DWORD WindowStyle_Fullscreen = WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP;
-	static const DWORD WindowStyle_FixedBorder = WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX;
-	static const DWORD WindowStyle_ResizableBorder = WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU | WS_CAPTION | WS_SIZEBOX | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+	static const i32_t min_client_size = 240;
 
 	#pragma pack(1)
 
-	struct WindowShape
+	struct window_shape_t
 	{
 		DWORD style;
-		DWORD styleEx;
-		Point2 pos;
-		Size2 size;
+		DWORD style_ext;
+		i32_t x;
+		i32_t y;
+		i32_t w;
+		i32_t h;
 	};
 
-	struct Application
+	struct app_t
 	{
 		HINSTANCE instance;
 		HWND window;
-		HCURSOR defaultCursor;
-		DWORD currentTime;
-		enum32 style;
-		Size2 resolution;
+		HCURSOR default_cursor;
+		DWORD current_time;
+		e32_t style;
+		size2_t resolution;
 		bool foreground;
 		bool active;
-		bool skipResize;
+		bool skip_resize;
 		bool closing;
 	};
 
 	#pragma pack()
 
-	static Application* application = nullptr;
-	ApplicationHandler applicationHandler = {};
+	static app_t* app = nullptr;
+	app_handler_t app_handler = {};
 
 	///////////////////////////////////////////////////////////
 	//
@@ -61,25 +62,25 @@ namespace aux
 	//
 	///////////////////////////////////////////////////////////
 
-	bool Internal__InitInput(HWND window, HCURSOR defaultCursor);
-	void Internal__FreeInput();
-	void Internal__CaptureInputFocus();
-	void Internal__ReleaseInputFocus();
-	void Internal__PressVirtualKey(int32 vKey);
-	void Internal__ReleaseVirtualKey(int32 vKey);
-	void Internal__DoubleClick(int32 vKey);
-	void Internal__MoveMouse(int32 x, int32 y);
-	void Internal__ScrollMouse(int32 pos);
-	void Internal__ProcessRawInput(WPARAM wParam, LPARAM lParam);
-	void Internal__UpdateCursor();
+	bool internal__init_input(HWND window, HCURSOR default_cursor);
+	void internal__free_input();
+	void internal__capture_input_focus();
+	void internal__release_input_focus();
+	void internal__press_virtual_key(i32_t vkey);
+	void internal__release_virtual_key(i32_t vkey);
+	void internal__double_click(i32_t vkey);
+	void internal__move_mouse(i32_t x, i32_t y);
+	void internal__scroll_mouse(i32_t pos);
+	void internal__process_raw_input(WPARAM wparam, LPARAM lparam);
+	void internal__update_cursor();
 
-	bool Internal__InitGraphics(HWND window);
-	void Internal__FreeGraphics();
+	bool internal__init_graphics(HWND window);
+	void internal__free_graphics();
 
-	bool Internal__InitAudio(HWND window);
-	void Internal__FreeAudio();
-	void Internal__SuspendAudioPlayback();
-	void Internal__ResumeAudioPlayback();
+	bool internal__init_audio(HWND window);
+	void internal__free_audio();
+	void internal__suspend_audio_playback();
+	void internal__resume_audio_playback();
 
 	///////////////////////////////////////////////////////////
 	//
@@ -87,17 +88,25 @@ namespace aux
 	//
 	///////////////////////////////////////////////////////////
 
-	static int32 LL_GetWidth(const RECT& rect)
+	static LONG get_w(const RECT& rect)
 	{
-		return (int32)(rect.right - rect.left);
+		return rect.right - rect.left;
 	}
 
-	static int32 LL_GetHeight(const RECT& rect)
+	static LONG get_h(const RECT& rect)
 	{
-		return (int32)(rect.bottom - rect.top);
+		return rect.bottom - rect.top;
 	}
 
-	static void LL_ForceReleaseMouse()
+	static void set_rect(RECT& rect, LONG left, LONG top, LONG right, LONG bottom)
+	{
+		rect.left = left;
+		rect.top = top;
+		rect.right = right;
+		rect.bottom = bottom;
+	}
+
+	static void force_release_mouse()
 	{
 		INPUT input = {};
 		input.type = INPUT_MOUSE;
@@ -106,229 +115,240 @@ namespace aux
 		SendInput(1, &input, sizeof(input));
 	}
 
-	static void LL_UpdateResolution()
+	static void update_resolution()
 	{
 		RECT client;
 
-		if (GetClientRect(application->window, &client))
+		if (GetClientRect(app->window, &client))
 		{
-			application->resolution = {LL_GetWidth(client), LL_GetHeight(client)};
+			app->resolution.w = (i32_t)get_w(client);
+			app->resolution.h = (i32_t)get_h(client);
 		}
 	}
 
-	static void LL_InitSettings(HINSTANCE instance, HWND window, enum32 style)
+	static void init_settings(HINSTANCE instance, HWND window, e32_t style)
 	{
-		application->instance = instance;
-		application->window = window;
-		application->defaultCursor = LoadCursorW(nullptr, IDC_ARROW);
-		application->style = style;
-		LL_UpdateResolution();
+		app->instance = instance;
+		app->window = window;
+		app->default_cursor = LoadCursorW(nullptr, IDC_ARROW);
+		app->style = style;
+		update_resolution();
 	}
 
-	static bool LL_RegisterWindowClass(HINSTANCE instance, WNDPROC handler)
+	static bool register_window_class(HINSTANCE instance, WNDPROC handler)
 	{
 		WNDCLASSW wc = {};
 		wc.hInstance = instance;
-		wc.lpszClassName = Window_ClassName;
+		wc.lpszClassName = class_name;
 		wc.lpfnWndProc = handler;
 		wc.hIcon = LoadIconW(nullptr, IDI_WINLOGO);
 		wc.style = CS_DBLCLKS;
 		return RegisterClassW(&wc) != (ATOM)0;
 	}
 
-	static void LL_UnregisterWindowClass()
+	static void unregister_window_class()
 	{
-		UnregisterClassW(Window_ClassName, application->instance);
+		UnregisterClassW(class_name, app->instance);
 	}
 
-	static bool LL_CalcWindowShape(enum32 style, const Size2& clientSize, WindowShape& shape)
+	static bool calc_window_shape(e32_t style, const size2_t& client_size, window_shape_t& shape)
 	{
 		switch (style)
 		{
-			case AppStyle_Fullscreen:
-				shape.style = WindowStyle_Fullscreen;
+			case APP_STYLE_FULLSCREEN:
+				shape.style = style_fullscreen;
 				break;
-			case AppStyle_FixedWindow:
-				shape.style = WindowStyle_FixedBorder;
+			case APP_STYLE_FIXED_WINDOW:
+				shape.style = style_fixed_border;
 				break;
-			case AppStyle_ResizableWindow:
-				shape.style = WindowStyle_ResizableBorder;
+			case APP_STYLE_RESIZABLE_WINDOW:
+				shape.style = style_resizable_border;
 				break;
 			default:
 				return false;
 		}
 
-		shape.styleEx = WS_EX_APPWINDOW;
-		const int32 screenWidth = GetSystemMetrics(SM_CXSCREEN);
-		const int32 screenHeight = GetSystemMetrics(SM_CYSCREEN);
+		shape.style_ext = WS_EX_APPWINDOW;
+		const i32_t screen_w = GetSystemMetrics(SM_CXSCREEN);
+		const i32_t screen_h = GetSystemMetrics(SM_CYSCREEN);
 
-		if (style == AppStyle_Fullscreen)
+		if (style == APP_STYLE_FULLSCREEN)
 		{
-			shape.pos = {};
-			shape.size = {screenWidth, screenHeight};
+			shape.x = 0;
+			shape.y = 0;
+			shape.w = screen_w;
+			shape.h = screen_h;
 			return true;
 		}
 
 		RECT bounds;
 
-		if ((clientSize.x == 0) && (clientSize.y == 0))
+		if ((client_size.w == 0) && (client_size.h == 0))
 		{
-			bounds = {0, 0, (LONG)screenWidth, (LONG)screenHeight};
+			set_rect(bounds, 0, 0, (LONG)screen_w, (LONG)screen_h);
 		}
 		else
 		{
-			bounds = {0, 0, (LONG)clientSize.x, (LONG)clientSize.y};
+			set_rect(bounds, 0, 0, (LONG)client_size.w, (LONG)client_size.h);
 		}
 
-		if (AdjustWindowRectEx(&bounds, shape.style, FALSE, shape.styleEx))
+		if (AdjustWindowRectEx(&bounds, shape.style, FALSE, shape.style_ext))
 		{
 			RECT work;
 
 			if (!SystemParametersInfoW(SPI_GETWORKAREA, 0, &work, 0))
 			{
-				work = {0, 0, (LONG)screenWidth, (LONG)screenHeight};
+				set_rect(work, 0, 0, (LONG)screen_w, (LONG)screen_h);
 			}
 
-			const int32 workWidth = LL_GetWidth(work);
-			const int32 workHeight = LL_GetHeight(work);
-			shape.size.x = Math_Clamp(LL_GetWidth(bounds), Window_MinClientSize, workWidth);
-			shape.size.y = Math_Clamp(LL_GetHeight(bounds), Window_MinClientSize, workHeight);
-			shape.pos.x = (int32)work.left + (workWidth - shape.size.x) / 2;
-			shape.pos.y = (int32)work.top + (workHeight - shape.size.y) / 2;
+			const i32_t work_w = (i32_t)get_w(work);
+			const i32_t work_h = (i32_t)get_h(work);
+			shape.w = clamp<i32_t>((i32_t)get_w(bounds), min_client_size, work_w);
+			shape.h = clamp<i32_t>((i32_t)get_h(bounds), min_client_size, work_h);
+			shape.x = (i32_t)work.left + (work_w - shape.w) / 2;
+			shape.y = (i32_t)work.top + (work_h - shape.h) / 2;
 			return true;
 		}
 
 		return false;
 	}
 
-	static void LL_CalcWindowMinMax(HWND window, MINMAXINFO& minMax)
+	static void calc_window_min_max(HWND window, MINMAXINFO& info)
 	{
-		RECT mins = {0, 0, Window_MinClientSize, Window_MinClientSize};
+		RECT mins = {0, 0, min_client_size, min_client_size};
 		DWORD style = (DWORD)GetWindowLongW(window, GWL_STYLE);
-		DWORD styleEx = (DWORD)GetWindowLongW(window, GWL_EXSTYLE);
+		DWORD style_ext = (DWORD)GetWindowLongW(window, GWL_EXSTYLE);
 
-		if (AdjustWindowRectEx(&mins, style, GetMenu(window) != nullptr, styleEx))
+		if (AdjustWindowRectEx(&mins, style, GetMenu(window) != nullptr, style_ext))
 		{
-			minMax.ptMinTrackSize = {(LONG)LL_GetWidth(mins), (LONG)LL_GetHeight(mins)};
+			info.ptMinTrackSize.x = get_w(mins);
+			info.ptMinTrackSize.y = get_h(mins);
 		}
 	}
 
-	static HWND LL_CreateWindow(const char title[], enum32 style, const Size2& clientSize)
+	static HWND create_window(const char title[], e32_t style, const size2_t& client_size)
 	{
-		WindowShape shape;
+		window_shape_t shape;
 
-		if (!LL_CalcWindowShape(style, clientSize, shape))
+		if (!calc_window_shape(style, client_size, shape))
 		{
 			return nullptr;
 		}
 
-		uint16* title16 = Unicode_Utf8to16((const uint8*)title, true);
-		HWND window = CreateWindowExW(shape.styleEx, Window_ClassName, (const wchar_t*)title16, shape.style, shape.pos.x, shape.pos.y, shape.size.x, shape.size.y, nullptr, nullptr, application->instance, nullptr);
+		u16_t* title16 = nullptr;
+
+		if (title != nullptr)
+		{
+			title16 = to_utf16((const u8_t*)title, true);
+		}
+
+		HWND window = CreateWindowExW(shape.style_ext, class_name, (const wchar_t*)title16, shape.style, shape.x, shape.y, shape.w, shape.h, nullptr, nullptr, app->instance, nullptr);
 
 		if (title16 != nullptr)
 		{
-			Unicode_Free(title16);
+			free_utf(title16);
 		}
 
 		return window;
 	}
 
-	static void LL_ResizeWindow(HWND window)
+	static void resize_window(HWND window)
 	{
 		RECT client;
 
 		if (GetClientRect(window, &client))
 		{
-			int32 clientWidth = (int32)LL_GetWidth(client);
-			int32 clientHeight = (int32)LL_GetHeight(client);
+			i32_t client_w = (i32_t)get_w(client);
+			i32_t client_h = (i32_t)get_h(client);
 
-			if ((clientWidth > 0) && (clientHeight > 0))
+			if ((client_w > 0) && (client_h > 0))
 			{
-				Size2& res = application->resolution;
+				size2_t& res = app->resolution;
 
-				if ((res.x != clientWidth) || (res.y != clientHeight))
+				if ((res.w != client_w) || (res.h != client_h))
 				{
-					res = {clientWidth, clientHeight};
+					res.w = client_w;
+					res.h = client_h;
 
-					if (applicationHandler.OnResize != nullptr)
+					if (app_handler.on_resize != nullptr)
 					{
-						applicationHandler.OnResize(applicationHandler.userPtr, res);
+						app_handler.on_resize(app_handler.user_ptr, res);
 					}
 				}
 			}
 		}
 	}
 
-	static void LL_ToggleWindowFocus(HWND window, bool active, bool minimized)
+	static void toggle_window_focus(HWND window, bool active, bool minimized)
 	{
 		if (active)
 		{
-			application->foreground = true;
+			app->foreground = true;
 		}
 		else
 		{
-			application->foreground = false;
+			app->foreground = false;
 
-			if (application->active)
+			if (app->active)
 			{
-				Internal__SuspendAudioPlayback();
-				Internal__ReleaseInputFocus();
-				application->active = false;
+				internal__suspend_audio_playback();
+				internal__release_input_focus();
+				app->active = false;
 			}
 
-			if ((application->style == AppStyle_Fullscreen) && !minimized)
+			if ((app->style == APP_STYLE_FULLSCREEN) && !minimized)
 			{
 				CloseWindow(window);
 			}
 		}
 	}
 
-	static void LL_SuspendMainLoop(HWND window)
+	static void suspend_main_loop(HWND window)
 	{
-		LL_ToggleWindowFocus(window, false, false);
+		toggle_window_focus(window, false, false);
 	}
 
-	static void LL_ResumeMainLoop()
+	static void resume_main_loop()
 	{
-		application->foreground = true;
-		application->currentTime = timeGetTime();
+		app->foreground = true;
+		app->current_time = timeGetTime();
 	}
 
-	static void LL_UpdateMainLoop()
+	static void update_main_loop()
 	{
-		if (!application->active)
+		if (!app->active)
 		{
-			Internal__CaptureInputFocus();
-			Internal__ResumeAudioPlayback();
-			application->active = true;
-			application->currentTime = timeGetTime();
+			internal__capture_input_focus();
+			internal__resume_audio_playback();
+			app->active = true;
+			app->current_time = timeGetTime();
 		}
 
 		DWORD t1 = timeGetTime();
-		DWORD dt = t1 - application->currentTime;
+		DWORD dt = t1 - app->current_time;
 
 		if (dt > 0)
 		{
-			application->currentTime = t1;
+			app->current_time = t1;
 		}
 
-		if (applicationHandler.OnUpdate != nullptr)
+		if (app_handler.on_update != nullptr)
 		{
-			applicationHandler.OnUpdate(applicationHandler.userPtr, (float32)dt / 1000);
+			app_handler.on_update(app_handler.user_ptr, (f32_t)dt / 1000);
 		}
 
-		if (applicationHandler.OnRedraw != nullptr)
+		if (app_handler.on_redraw != nullptr)
 		{
-			applicationHandler.OnRedraw(applicationHandler.userPtr);
+			app_handler.on_redraw(app_handler.user_ptr);
 		}
 	}
 
-	static void LL_RunMainLoop()
+	static void run_main_loop()
 	{
-		application->currentTime = timeGetTime();
+		app->current_time = timeGetTime();
 		MSG message;
 
-		while (application->window != nullptr)
+		while (app->window != nullptr)
 		{
 			if (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE))
 			{
@@ -336,9 +356,9 @@ namespace aux
 			}
 			else
 			{
-				if (application->foreground)
+				if (app->foreground)
 				{
-					LL_UpdateMainLoop();
+					update_main_loop();
 				}
 				else
 				{
@@ -348,54 +368,54 @@ namespace aux
 		}
 	}
 
-	static LRESULT CALLBACK LL_OnWindowMessage(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
+	static LRESULT CALLBACK on_window_message(HWND window, UINT message, WPARAM wparam, LPARAM lparam)
 	{
 		switch (message)
 		{
 			case WM_CREATE:
-				LL_ForceReleaseMouse();
+				force_release_mouse();
 				break;
 			case WM_SIZE:
-				if (!application->skipResize)
+				if (!app->skip_resize)
 				{
-					LL_ResizeWindow(window);
+					resize_window(window);
 				}
 				break;
 			case WM_ACTIVATE:
-				LL_ToggleWindowFocus(window, LOWORD(wParam) != WA_INACTIVE, HIWORD(wParam) != 0);
+				toggle_window_focus(window, LOWORD(wparam) != WA_INACTIVE, HIWORD(wparam) != 0);
 				break;
 			case WM_PAINT:
 				ValidateRect(window, nullptr);
 				return 0;
 			case WM_CLOSE:
-				application->window = nullptr;
+				app->window = nullptr;
 				return 0;
 			case WM_ERASEBKGND:
 				return 1;
 			case WM_SETCURSOR:
-				if (application->active && (LOWORD(lParam) == HTCLIENT))
+				if (app->active && (LOWORD(lparam) == HTCLIENT))
 				{
-					Internal__UpdateCursor();
+					internal__update_cursor();
 					return 1;
 				}
 				break;
 			case WM_GETMINMAXINFO:
-				LL_CalcWindowMinMax(window, *(MINMAXINFO*)lParam);
+				calc_window_min_max(window, *(MINMAXINFO*)lparam);
 				break;
 			case WM_NCHITTEST:
-				if (application->style == AppStyle_Fullscreen)
+				if (app->style == APP_STYLE_FULLSCREEN)
 				{
 					return HTCLIENT;
 				}
 				break;
 			case WM_INPUT:
-				if (application->active)
+				if (app->active)
 				{
-					Internal__ProcessRawInput(wParam, lParam);
+					internal__process_raw_input(wparam, lparam);
 				}
 				break;
 			case WM_SYSCOMMAND:
-				switch (wParam)
+				switch (wparam)
 				{
 					case SC_SCREENSAVE:
 					case SC_MONITORPOWER:
@@ -403,138 +423,138 @@ namespace aux
 				}
 				break;
 			case WM_MOUSEMOVE:
-				if (application->active)
+				if (app->active)
 				{
-					const Size2& res = application->resolution;
-					int32 x = (SHORT)LOWORD(lParam);
-					int32 y = (SHORT)HIWORD(lParam);
+					const size2_t& res = app->resolution;
+					i32_t w = (SHORT)LOWORD(lparam);
+					i32_t h = (SHORT)HIWORD(lparam);
 
-					if ((x >= 0) && (x < res.x) && (y >= 0) && (y < res.y))
+					if ((w >= 0) && (w < res.w) && (h >= 0) && (h < res.h))
 					{
-						Internal__MoveMouse(x, y);
+						internal__move_mouse(w, h);
 					}
 				}
 				break;
 			case WM_LBUTTONDOWN:
-				Internal__PressVirtualKey(VK_LBUTTON);
+				internal__press_virtual_key(VK_LBUTTON);
 				break;
 			case WM_LBUTTONUP:
-				Internal__ReleaseVirtualKey(VK_LBUTTON);
+				internal__release_virtual_key(VK_LBUTTON);
 				break;
 			case WM_LBUTTONDBLCLK:
-				Internal__DoubleClick(VK_LBUTTON);
+				internal__double_click(VK_LBUTTON);
 				break;
 			case WM_RBUTTONDOWN:
-				Internal__PressVirtualKey(VK_RBUTTON);
+				internal__press_virtual_key(VK_RBUTTON);
 				break;
 			case WM_RBUTTONUP:
-				Internal__ReleaseVirtualKey(VK_RBUTTON);
+				internal__release_virtual_key(VK_RBUTTON);
 				break;
 			case WM_RBUTTONDBLCLK:
-				Internal__DoubleClick(VK_RBUTTON);
+				internal__double_click(VK_RBUTTON);
 				break;
 			case WM_MBUTTONDOWN:
-				Internal__PressVirtualKey(VK_MBUTTON);
+				internal__press_virtual_key(VK_MBUTTON);
 				break;
 			case WM_MBUTTONUP:
-				Internal__ReleaseVirtualKey(VK_MBUTTON);
+				internal__release_virtual_key(VK_MBUTTON);
 				break;
 			case WM_MBUTTONDBLCLK:
-				Internal__DoubleClick(VK_MBUTTON);
+				internal__double_click(VK_MBUTTON);
 				break;
 			case WM_MOUSEWHEEL:
-				Internal__ScrollMouse((SHORT)HIWORD(wParam) / WHEEL_DELTA);
+				internal__scroll_mouse((SHORT)HIWORD(wparam) / WHEEL_DELTA);
 				break;
 			case WM_XBUTTONDOWN:
-				switch (HIWORD(wParam))
+				switch (HIWORD(wparam))
 				{
 					case XBUTTON1:
-						Internal__PressVirtualKey(VK_XBUTTON1);
+						internal__press_virtual_key(VK_XBUTTON1);
 						break;
 					case XBUTTON2:
-						Internal__PressVirtualKey(VK_XBUTTON2);
+						internal__press_virtual_key(VK_XBUTTON2);
 						break;
 				}
 				break;
 			case WM_XBUTTONUP:
-				switch (HIWORD(wParam))
+				switch (HIWORD(wparam))
 				{
 					case XBUTTON1:
-						Internal__ReleaseVirtualKey(VK_XBUTTON1);
+						internal__release_virtual_key(VK_XBUTTON1);
 						break;
 					case XBUTTON2:
-						Internal__ReleaseVirtualKey(VK_XBUTTON2);
+						internal__release_virtual_key(VK_XBUTTON2);
 						break;
 				}
 				break;
 			case WM_XBUTTONDBLCLK:
-				switch (HIWORD(wParam))
+				switch (HIWORD(wparam))
 				{
 					case XBUTTON1:
-						Internal__DoubleClick(VK_XBUTTON1);
+						internal__double_click(VK_XBUTTON1);
 						break;
 					case XBUTTON2:
-						Internal__DoubleClick(VK_XBUTTON2);
+						internal__double_click(VK_XBUTTON2);
 						break;
 				}
 				break;
 			case WM_ENTERMENULOOP:
-				LL_SuspendMainLoop(window);
+				suspend_main_loop(window);
 				break;
 			case WM_EXITMENULOOP:
-				LL_ResumeMainLoop();
+				resume_main_loop();
 				break;
 			case WM_POWERBROADCAST:
-				switch (wParam)
+				switch (wparam)
 				{
 					case PBT_APMRESUMEAUTOMATIC:
-						if (applicationHandler.OnAwake != nullptr)
+						if (app_handler.on_awake != nullptr)
 						{
-							applicationHandler.OnAwake(applicationHandler.userPtr);
+							app_handler.on_awake(app_handler.user_ptr);
 						}
 						break;
 					case PBT_APMSUSPEND:
-						if (applicationHandler.OnSleep != nullptr)
+						if (app_handler.on_sleep != nullptr)
 						{
-							applicationHandler.OnSleep(applicationHandler.userPtr);
+							app_handler.on_sleep(app_handler.user_ptr);
 						}
 						break;
 				}
 				break;
 			case WM_ENTERSIZEMOVE:
-				LL_SuspendMainLoop(window);
-				application->skipResize = true;
+				suspend_main_loop(window);
+				app->skip_resize = true;
 				break;
 			case WM_EXITSIZEMOVE:
-				LL_ResizeWindow(window);
-				LL_ResumeMainLoop();
-				application->skipResize = false;
+				resize_window(window);
+				resume_main_loop();
+				app->skip_resize = false;
 				break;
 		}
 
-		return DefWindowProcW(window, message, wParam, lParam);
+		return DefWindowProcW(window, message, wparam, lparam);
 	}
 
-	static bool LL_InitSubsystems(HWND window)
+	static bool init_subsystems(HWND window)
 	{
-		if (!Internal__InitInput(window, application->defaultCursor))
+		if (!internal__init_input(window, app->default_cursor))
 		{
 			return false;
 		}
 
-		if (!Internal__InitGraphics(window))
+		if (!internal__init_graphics(window))
 		{
 			return false;
 		}
 
-		if (!Internal__InitAudio(window))
+		if (!internal__init_audio(window))
 		{
 			return false;
 		}
 
-		if (applicationHandler.OnInit != nullptr)
+		if (app_handler.on_init != nullptr)
 		{
-			if (!applicationHandler.OnInit(applicationHandler.userPtr))
+			if (!app_handler.on_init(app_handler.user_ptr))
 			{
 				return false;
 			}
@@ -543,16 +563,16 @@ namespace aux
 		return true;
 	}
 
-	static void LL_FreeSubsystems()
+	static void free_subsystems()
 	{
-		if (applicationHandler.OnFree != nullptr)
+		if (app_handler.on_free != nullptr)
 		{
-			applicationHandler.OnFree(applicationHandler.userPtr);
+			app_handler.on_free(app_handler.user_ptr);
 		}
 
-		Internal__FreeAudio();
-		Internal__FreeGraphics();
-		Internal__FreeInput();
+		internal__free_audio();
+		internal__free_graphics();
+		internal__free_input();
 	}
 
 	///////////////////////////////////////////////////////////
@@ -561,55 +581,55 @@ namespace aux
 	//
 	///////////////////////////////////////////////////////////
 
-	enum32 Application_GetStyle()
+	e32_t get_app_style()
 	{
-		return application->style;
+		return app->style;
 	}
 
-	const Size2& Application_GetResolution()
+	const size2_t& get_app_res()
 	{
-		return application->resolution;
+		return app->resolution;
 	}
 
-	void Application_Start(const char title[], enum32 style, const Size2& resolution)
+	void start_app(const char title[], e32_t style, const size2_t& res)
 	{
-		AUX_DEBUG_ASSERT(application == nullptr);
+		AUX_DEBUG_ASSERT(app == nullptr);
 
-		application = (Application*)Memory_AllocateAndZero(sizeof(Application));
+		app = (app_t*)zalloc_mem(sizeof(app_t));
 
 		if (SUCCEEDED(CoInitializeEx(nullptr, COINIT_MULTITHREADED)))
 		{
-			MMRESULT timeResult = timeBeginPeriod(1);
+			MMRESULT time_result = timeBeginPeriod(1);
 			HINSTANCE instance = GetModuleHandleW(nullptr);
 
-			if (LL_RegisterWindowClass(instance, &LL_OnWindowMessage))
+			if (register_window_class(instance, &on_window_message))
 			{
-				HWND window = LL_CreateWindow(title, style, resolution);
+				HWND window = create_window(title, style, res);
 
 				if (window != nullptr)
 				{
-					LL_InitSettings(instance, window, style);
+					init_settings(instance, window, style);
 
-					if (LL_InitSubsystems(window))
+					if (init_subsystems(window))
 					{
 						ShowWindow(window, SW_SHOWNORMAL);
 
 						if (UpdateWindow(window))
 						{
-							LL_RunMainLoop();
+							run_main_loop();
 						}
 
 						ShowWindow(window, SW_HIDE);
 					}
 
-					LL_FreeSubsystems();
+					free_subsystems();
 					DestroyWindow(window);
 				}
 
-				LL_UnregisterWindowClass();
+				unregister_window_class();
 			}
 
-			if (timeResult == TIMERR_NOERROR)
+			if (time_result == TIMERR_NOERROR)
 			{
 				timeEndPeriod(1);
 			}
@@ -617,36 +637,37 @@ namespace aux
 			CoUninitialize();
 		}
 
-		Memory_Free(application);
-		application = nullptr;
+		free_mem(app);
+		app = nullptr;
 	}
 
-	void Application_Close()
+	void close_app()
 	{
-		HWND window = application->window;
+		HWND window = app->window;
 
-		if (!application->closing && (window != nullptr) && IsWindow(window))
+		if (!app->closing && (window != nullptr) && IsWindow(window))
 		{
-			application->closing = true;
+			app->closing = true;
 			PostMessageW(window, WM_CLOSE, 0, 0);
 		}
 	}
 
-	void Application_Reshape(enum32 style, const Size2& resolution)
+	void reshape_app(e32_t style, const size2_t& res)
 	{
+		HWND window = app->window;
 		DWORD flags = SWP_NOZORDER | SWP_ASYNCWINDOWPOS | SWP_SHOWWINDOW;
-		bool styleChanged = style != application->style;
+		bool style_changed = style != app->style;
 
-		if (styleChanged)
+		if (style_changed)
 		{
 			flags |= SWP_FRAMECHANGED;
 
 			switch (style)
 			{
-				case AppStyle_Fullscreen:
+				case APP_STYLE_FULLSCREEN:
 					break;
-				case AppStyle_FixedWindow:
-				case AppStyle_ResizableWindow:
+				case APP_STYLE_FIXED_WINDOW:
+				case APP_STYLE_RESIZABLE_WINDOW:
 					flags |= SWP_DRAWFRAME;
 					break;
 				default:
@@ -654,25 +675,23 @@ namespace aux
 			}
 		}
 
-		WindowShape shape;
+		window_shape_t shape;
 
-		if (LL_CalcWindowShape(style, resolution, shape))
+		if (calc_window_shape(style, res, shape))
 		{
-			HWND window = application->window;
-
-			if (styleChanged)
+			if (style_changed)
 			{
 				if (SetWindowLongW(window, GWL_STYLE, (LONG)shape.style) == 0)
 				{
 					return;
 				}
 
-				application->style = style;
+				app->style = style;
 			}
 
-			if (SetWindowPos(window, nullptr, shape.pos.x, shape.pos.y, shape.size.x, shape.size.y, flags))
+			if (SetWindowPos(window, nullptr, shape.x, shape.y, shape.w, shape.h, flags))
 			{
-				LL_UpdateResolution();
+				update_resolution();
 			}
 		}
 	}

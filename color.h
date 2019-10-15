@@ -6,12 +6,12 @@ namespace aux
 {
 	#pragma pack(1)
 
-	struct Color
+	struct color_t
 	{
-		float32 r;
-		float32 g;
-		float32 b;
-		float32 a;
+		f32_t r;
+		f32_t g;
+		f32_t b;
+		f32_t a;
 	};
 
 	#pragma pack()

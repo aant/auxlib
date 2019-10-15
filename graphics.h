@@ -1,162 +1,160 @@
 #pragma once
 
+#include "color.h"
 #include "point2.h"
 #include "size2.h"
-#include "color.h"
 
 namespace aux
 {
 	enum
 	{
-		ColorBlend_BadEnum = -1,
+		COLOR_BLEND_BAD_ENUM = -1,
 
-		ColorBlend_Off,
-		ColorBlend_Add,
-		ColorBlend_Multiply,
-		ColorBlend_Alpha,
+		COLOR_BLEND_OFF,
+		COLOR_BLEND_ADD,
+		COLOR_BLEND_MULTIPLY,
+		COLOR_BLEND_ALPHA,
 
-		ColorBlend_MaxEnums
+		COLOR_BLEND_MAX_ENUMS
 	};
 
 	enum
 	{
-		DepthTest_BadEnum = -1,
+		DEPTH_TEST_BAD_ENUM = -1,
 
-		DepthTest_Off,
-		DepthTest_LessEqual,
-		DepthTest_GreaterEqual,
+		DEPTH_TEST_OFF,
+		DEPTH_TEST_LESS_EQUAL,
+		DEPTH_TEST_GREATER_EQUAL,
 
-		DepthTest_MaxEnums
+		DEPTH_TEST_MAX_ENUMS
 	};
 
 	enum
 	{
-		DrawMode_BadEnum = -1,
+		DRAW_MODE_BAD_ENUM = -1,
 
-		DrawMode_Lines,
-		DrawMode_Triangles,
+		DRAW_MODE_LINES,
+		DRAW_MODE_TRIANGLES,
 
-		DrawMode_MaxEnums
+		DRAW_MODE_MAX_ENUMS
 	};
 
 	enum
 	{
-		TextureFormat_BadEnum = -1,
+		TEXTURE_FORMAT_BAD_ENUM = -1,
 
-		TextureFormat_R8,
-		TextureFormat_R8G8,
-		TextureFormat_R8G8B8,
-		TextureFormat_R8G8B8A8,
+		TEXTURE_FORMAT_R8,
+		TEXTURE_FORMAT_R8G8,
+		TEXTURE_FORMAT_R8G8B8,
+		TEXTURE_FORMAT_R8G8B8A8,
 
-		TextureFormat_MaxEnums
+		TEXTURE_FORMAT_MAX_ENUMS
 	};
 
 	enum
 	{
-		TextureFilter_BadEnum = -1,
+		CUBEMAP_FACE_BAD_ENUM = -1,
 
-		TextureFilter_Point,
-		TextureFilter_Bilinear,
-		TextureFilter_Trilinear,
-		TextureFilter_Anisotropic,
+		CUBEMAP_FACE_LEFT,
+		CUBEMAP_FACE_RIGHT,
+		CUBEMAP_FACE_TOP,
+		CUBEMAP_FACE_BOTTOM,
+		CUBEMAP_FACE_FRONT,
+		CUBEMAP_FACE_BACK,
 
-		TextureFilter_MaxEnums
+		CUBEMAP_FACE_MAX_ENUMS
 	};
 
 	enum
 	{
-		TextureWrap_BadEnum = -1,
+		TEXTURE_FILTER_BAD_ENUM = -1,
 
-		TextureWrap_Clamp,
-		TextureWrap_Repeat,
+		TEXTURE_FILTER_POINT,
+		TEXTURE_FILTER_BILINEAR,
+		TEXTURE_FILTER_TRILINEAR,
+		TEXTURE_FILTER_ANISOTROPIC,
 
-		TextureWrap_MaxEnums
+		TEXTURE_FILTER_MAX_ENUMS
 	};
 
 	enum
 	{
-		CubemapFace_BadEnum = -1,
+		TEXTURE_WRAP_BAD_ENUM = -1,
 
-		CubemapFace_Left,
-		CubemapFace_Right,
-		CubemapFace_Top,
-		CubemapFace_Bottom,
-		CubemapFace_Front,
-		CubemapFace_Back,
+		TEXTURE_WRAP_CLAMP,
+		TEXTURE_WRAP_REPEAT,
 
-		CubemapFace_MaxEnums
+		TEXTURE_WRAP_MAX_ENUMS
 	};
 
 	enum
 	{
-		IndexFormat_BadEnum = -1,
+		INDEX_FORMAT_BAD_ENUM = -1,
 
-		IndexFormat_Uint16,
-		IndexFormat_Uint32,
+		INDEX_FORMAT_UINT16,
+		INDEX_FORMAT_UINT32,
 
-		IndexFormat_MaxEnums
+		INDEX_FORMAT_MAX_ENUMS
 	};
 
-	typedef struct TextureImpl* TextureHandle;
-	typedef struct CubemapImpl* CubemapHandle;
-	typedef struct SamplerImpl* SamplerHandle;
-	typedef struct VertexFormatImpl* VertexFormatHandle;
-	typedef struct VertexBufferImpl* VertexBufferHandle;
-	typedef struct IndexBufferImpl* IndexBufferHandle;
-	typedef struct ShaderBufferImpl* ShaderBufferHandle;
-	typedef struct VertexShaderImpl* VertexShaderHandle;
-	typedef struct PixelShaderImpl* PixelShaderHandle;
+	struct texture_t;
+	struct cubemap_t;
+	struct sampler_t;
+	struct vertex_format_t;
+	struct vertex_buffer_t;
+	struct index_buffer_t;
+	struct shader_buffer_t;
+	struct vertex_shader_t;
+	struct pixel_shader_t;
 
-	struct GraphicsCaps
+	struct graphics_caps_t
 	{
-		int32 maxTextureDimension;
-		int32 maxTextureSlots;
-		int32 maxCubemapDimension;
-		int32 maxSamplerSlots;
+		i32_t max_texture_dim;
+		i32_t max_cubemap_dim;
+		i32_t max_texture_slots;
+		i32_t max_sampler_slots;
 	};
 
-	const GraphicsCaps& Graphics_GetCaps();
+	const graphics_caps_t& get_graphics_caps();
 
-	void Graphics_ClearFrame(const Color& color, float32 depth);
-	void Graphics_ClearFrameColor(const Color& color);
-	void Graphics_ClearFrameDepth(float32 depth);
-	void Graphics_PresentFrame();
-	void Graphics_ToggleFrameSync(bool on);
+	void clear_frame(const color_t& color, f32_t depth);
+	void clear_frame_color(const color_t& color);
+	void clear_frame_depth(f32_t depth);
+	void present_frame();
+	void toggle_frame_sync(bool on);
 
-	void Graphics_SetColorBlend(enum32 blend);
-	void Graphics_SetDepthTest(enum32 test);
-	void Graphics_SetDrawMode(enum32 mode);
-	void Graphics_SetViewport(const Point2& origin, const Size2& extents, float32 depthNear, float32 depthFar);
+	void set_color_blend(e32_t blend);
+	void set_depth_test(e32_t test);
+	void set_draw_mode(e32_t mode);
+	void set_viewport(const point2_t& offset, size2_t& size, f32_t depth_near, f32_t depth_far);
 
-	void Graphics_DrawElements(int32 startVertex, int32 vertexCount);
-	void Graphics_DrawIndexedElements(int32 startIndex, int32 indexCount);
+	void draw_elements(i32_t start_vertex, i32_t vertex_count);
+	void draw_indexed_elements(i32_t start_index, i32_t index_count);
 
-	TextureHandle Graphics_CreateTexture(enum32 format, int32 width, int32 height, int32 levelCount = 1, const void* data = nullptr);
-	TextureHandle Graphics_CreateTexture(enum32 format, const Size2& size, int32 levelCount = 1, const void* data = nullptr);
-	void Graphics_DestroyTexture(TextureHandle texture);
-	void Graphics_UpdateTexture(TextureHandle texture, int32 level, int32 x, int32 y, int32 width, int32 height, const void* data);
-	void Graphics_UpdateTexture(TextureHandle texture, int32 level, const Point2& offset, const Size2& size, const void* data);
+	texture_t* create_texture(e32_t format, const size2_t& size, bool multilevel, const void* data = nullptr);
+	void destroy_texture(texture_t* texture);
+	void update_texture(texture_t* texture, i32_t level, const point2_t& offset, const size2_t& size, const void* data);
 
-	CubemapHandle Graphics_CreateCubemap(enum32 format, int32 size, int32 levelCount = 1, const void* data = nullptr);
-	void Graphics_DestroyCubemap(CubemapHandle cubemap);
-	void Graphics_UpdateCubemap(CubemapHandle cubemap, int32 level, int32 x, int32 y, int32 width, int32 height, const void* data);
+	cubemap_t* create_cubemap(e32_t format, i32_t size, bool multilevel, const void* data = nullptr);
+	void destroy_cubemap(texture_t* cubemap);
+	void update_cubemap(texture_t* cubemap, i32_t level, const point2_t& offset, const size2_t& size, const void* data);
 
-	SamplerHandle Graphics_CreateSampler(enum32 filter, enum32 wrapU, enum32 wrapV);
-	void Graphics_DestroySampler(SamplerHandle sampler);
+	sampler_t* create_sampler(e32_t filter, e32_t wrap_u, e32_t wrap_v);
+	void destroy_sampler(sampler_t* sampler);
 
-	VertexBufferHandle Graphics_CreateVertexBuffer(bool dynamic, int32 vertexSize, int32 vertexCount, const void* data = nullptr);
-	void Graphics_DestroyVertexBuffer(VertexBufferHandle buffer);
-	void Graphics_UpdateVertexBuffer(VertexBufferHandle buffer, int32 startVertex, int32 vertexCount, const void* data);
-	void Graphics_SetVertexBuffer(VertexBufferHandle buffer);
+	vertex_buffer_t* create_vertex_buffer(bool dynamic, i32_t vertex_size, i32_t vertex_count, const void* data = nullptr);
+	void destroy_vertex_buffer(vertex_buffer_t* buffer);
+	void update_vertex_buffer(vertex_buffer_t* buffer, i32_t start_vertex, i32_t vertex_count, const void* data);
+	void set_vertex_buffer(vertex_buffer_t* buffer);
 
-	IndexBufferHandle Graphics_CreateIndexBuffer(bool dynamic, enum32 indexFormat, int32 indexCount, const void* data = nullptr);
-	void Graphics_DestroyIndexBuffer(IndexBufferHandle buffer);
-	void Graphics_UpdateIndexBuffer(IndexBufferHandle buffer, int32 startIndex, int32 indexCount, const void* data);
-	void Graphics_SetIndexBuffer(IndexBufferHandle buffer);
+	index_buffer_t* create_index_buffer(bool dynamic, e32_t index_format, i32_t index_count, const void* data = nullptr);
+	void destroy_index_buffer(index_buffer_t* buffer);
+	void update_index_buffer(index_buffer_t* buffer, i32_t start_index, i32_t index_count, const void* data);
+	void set_index_buffer(index_buffer_t* buffer);
 
-	void Graphics_SetPixelShaderResource(TextureHandle texture, int32 slot);
-	void Graphics_SetPixelShaderResource(SamplerHandle sampler, int32 slot);
-	void Graphics_SetPixelShaderResource(ShaderBufferHandle buffer, int32 slot);
+	void set_pixel_shader_resource(texture_t* texture, i32_t slot);
+	void set_pixel_shader_resource(sampler_t* sampler, i32_t slot);
+	void set_pixel_shader_resource(shader_buffer_t* buffer, i32_t slot);
 
-	void Graphics_SetVertexShaderResource(ShaderBufferHandle buffer, int32 slot);
+	void set_vertex_shader_resource(shader_buffer_t* buffer, i32_t slot);
 }

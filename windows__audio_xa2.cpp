@@ -15,23 +15,23 @@ namespace aux
 {
 	enum
 	{
-		SubmixVoice_Ambient,
-		SubmixVoice_Effects,
-		SubmixVoice_Speech,
-		SubmixVoice_Music,
+		SUBMIX_VOICE_AMBIENT,
+		SUBMIX_VOICE_EFFECTS,
+		SUBMIX_VOICE_SPEECH,
+		SUBMIX_VOICE_MUSIC,
 
-		SubmixVoice_MaxEnums
+		MAX_SUBMIX_VOICES
 	};
 
-	struct Audio
+	struct audio_t
 	{
 		HWND window;
 		IXAudio2* device;
-		IXAudio2MasteringVoice* masterVoice;
-		IXAudio2SubmixVoice* submixVoices[SubmixVoice_MaxEnums];
+		IXAudio2MasteringVoice* master_voice;
+		IXAudio2SubmixVoice* submix_voices[MAX_SUBMIX_VOICES];
 	};
 
-	static Audio* audio = nullptr;
+	static audio_t* audio = nullptr;
 
 	///////////////////////////////////////////////////////////
 	//
@@ -39,7 +39,7 @@ namespace aux
 	//
 	///////////////////////////////////////////////////////////
 
-	static void LL_SafeRelease(IXAudio2Voice* voice)
+	static void safe_release(IXAudio2Voice* voice)
 	{
 		if (voice != nullptr)
 		{
@@ -47,7 +47,7 @@ namespace aux
 		}
 	}
 
-	static bool LL_CreateDeviceAndMasterVoice()
+	static bool create_device_and_master_voice()
 	{
 		UINT32 flags = 0;
 
@@ -60,7 +60,7 @@ namespace aux
 			return false;
 		}
 
-		if (FAILED(audio->device->CreateMasteringVoice(&(audio->masterVoice), XAUDIO2_DEFAULT_CHANNELS, XAUDIO2_DEFAULT_SAMPLERATE, 0, 0, nullptr)))
+		if (FAILED(audio->device->CreateMasteringVoice(&(audio->master_voice), XAUDIO2_DEFAULT_CHANNELS, XAUDIO2_DEFAULT_SAMPLERATE, 0, 0, nullptr)))
 		{
 			return false;
 		}
@@ -68,7 +68,7 @@ namespace aux
 		return true;
 	}
 
-	static bool LL_CreateSubmixVoice(IXAudio2SubmixVoice** voice, UINT32 sample_rate, UINT32 processing_stage)
+	static bool create_submix_voice(IXAudio2SubmixVoice** voice, UINT32 sample_rate, UINT32 processing_stage)
 	{
 		return SUCCEEDED(audio->device->CreateSubmixVoice(voice, 2, sample_rate, 0, processing_stage, nullptr, nullptr));
 	}
@@ -79,19 +79,19 @@ namespace aux
 	//
 	///////////////////////////////////////////////////////////
 
-	bool Internal__InitAudio(HWND window)
+	bool internal__init_audio(HWND window)
 	{
-		audio = (Audio*)Memory_AllocateAndZero(sizeof(Audio));
+		audio = (audio_t*)zalloc_mem(sizeof(audio_t));
 		audio->window = window;
 
-		if (!LL_CreateDeviceAndMasterVoice())
+		if (!create_device_and_master_voice())
 		{
 			return false;
 		}
 
-		for (UINT32 i = 0; i < SubmixVoice_MaxEnums; ++i)
+		for (UINT32 i = 0; i < MAX_SUBMIX_VOICES; ++i)
 		{
-			if (!LL_CreateSubmixVoice(audio->submixVoices + i, 44100, i))
+			if (!create_submix_voice(audio->submix_voices + i, 44100, i))
 			{
 				return false;
 			}
@@ -100,7 +100,7 @@ namespace aux
 		return true;
 	}
 
-	void Internal__FreeAudio()
+	void internal__free_audio()
 	{
 		if (audio != nullptr)
 		{
@@ -108,26 +108,26 @@ namespace aux
 			{
 				audio->device->StartEngine();
 
-				for (UINT32 i = 0; i < SubmixVoice_MaxEnums; ++i)
+				for (UINT32 i = 0; i < MAX_SUBMIX_VOICES; ++i)
 				{
-					LL_SafeRelease(audio->submixVoices[(UINT32)SubmixVoice_MaxEnums - i - 1]);
+					safe_release(audio->submix_voices[(UINT32)MAX_SUBMIX_VOICES - i - 1]);
 				}
 
-				LL_SafeRelease(audio->masterVoice);
+				safe_release(audio->master_voice);
 				audio->device->Release();
 			}
 
-			Memory_Free(audio);
+			free_mem(audio);
 			audio = nullptr;
 		}
 	}
 
-	void Internal__SuspendAudioPlayback()
+	void internal__suspend_audio_playback()
 	{
 		audio->device->StopEngine();
 	}
 
-	void Internal__ResumeAudioPlayback()
+	void internal__resume_audio_playback()
 	{
 		audio->device->StartEngine();
 	}

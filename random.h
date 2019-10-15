@@ -4,21 +4,21 @@
 
 namespace aux
 {
-	class Random
+	class random_t
 	{
 	public:
 
-		uint64 seed;
+		u64_t seed;
 
-		Random();
+		random_t();
 
-		Random(const Random&) = default;
-		Random& operator = (const Random&) = default;
+		random_t(const random_t&) = default;
+		random_t& operator = (const random_t&) = default;
 
-		explicit Random(uint64 seed);
+		explicit random_t(u64_t seed);
 
-		int32 GetNext(int32 minimum, int32 maximum);
-		float32 GetNext(float32 minimum, float32 maximum);
-		uint32 GetNext(uint32 maximum);
+		i32_t get_next(i32_t minimum, i32_t maximum);
+		f32_t get_next(f32_t minimum, f32_t maximum);
+		u32_t get_next(u32_t maximum);
 	};
 }
