@@ -13,23 +13,21 @@
 
 namespace aux
 {
-	enum
-	{
-		SUBMIX_VOICE_AMBIENT,
-		SUBMIX_VOICE_EFFECTS,
-		SUBMIX_VOICE_SPEECH,
-		SUBMIX_VOICE_MUSIC,
-
-		MAX_SUBMIX_VOICES
-	};
+	#pragma pack(1)
 
 	struct audio_t
 	{
 		HWND window;
 		IXAudio2* device;
 		IXAudio2MasteringVoice* master_voice;
-		IXAudio2SubmixVoice* submix_voices[MAX_SUBMIX_VOICES];
+		IXAudio2SubmixVoice* submix_voice_ambient;
+		IXAudio2SubmixVoice* submix_voice_effects;
+		IXAudio2SubmixVoice* submix_voice_speech;
+		IXAudio2SubmixVoice* submix_voice_music;
+		audio_caps_t caps;
 	};
+
+	#pragma pack()
 
 	static audio_t* audio = nullptr;
 
@@ -47,6 +45,23 @@ namespace aux
 		}
 	}
 
+	static void handle_critical_error(const wchar_t message[], HRESULT result)
+	{
+		MessageBoxW(GetForegroundWindow(), message, L"CRITICAL ERROR", MB_TOPMOST | MB_TASKMODAL | MB_ICONERROR | MB_OK);
+		ExitProcess((UINT)-1);
+		(void)result;
+	}
+
+	static void check_for_critical_error(HRESULT result)
+	{
+		switch (result)
+		{
+			case XAUDIO2_E_DEVICE_INVALIDATED:
+				handle_critical_error(L"Audio device lost.", result);
+				break;
+		}
+	}
+
 	static bool create_device_and_master_voice()
 	{
 		UINT32 flags = 0;
@@ -55,13 +70,19 @@ namespace aux
 		flags |= XAUDIO2_DEBUG_ENGINE;
 		#endif
 
-		if (FAILED(XAudio2Create(&(audio->device), flags, XAUDIO2_DEFAULT_PROCESSOR)))
+		HRESULT result = XAudio2Create(&(audio->device), flags, XAUDIO2_DEFAULT_PROCESSOR);
+
+		if (FAILED(result))
 		{
+			check_for_critical_error(result);
 			return false;
 		}
 
-		if (FAILED(audio->device->CreateMasteringVoice(&(audio->master_voice), XAUDIO2_DEFAULT_CHANNELS, XAUDIO2_DEFAULT_SAMPLERATE, 0, 0, nullptr)))
+		result = audio->device->CreateMasteringVoice(&(audio->master_voice), XAUDIO2_DEFAULT_CHANNELS, XAUDIO2_DEFAULT_SAMPLERATE, 0, 0, nullptr);
+
+		if (FAILED(result))
 		{
+			check_for_critical_error(result);
 			return false;
 		}
 
@@ -70,7 +91,15 @@ namespace aux
 
 	static bool create_submix_voice(IXAudio2SubmixVoice** voice, UINT32 sample_rate, UINT32 processing_stage)
 	{
-		return SUCCEEDED(audio->device->CreateSubmixVoice(voice, 2, sample_rate, 0, processing_stage, nullptr, nullptr));
+		HRESULT result = audio->device->CreateSubmixVoice(voice, 2, sample_rate, 0, processing_stage, nullptr, nullptr);
+
+		if (SUCCEEDED(result))
+		{
+			return true;
+		}
+
+		check_for_critical_error(result);
+		return false;
 	}
 
 	///////////////////////////////////////////////////////////
@@ -89,14 +118,32 @@ namespace aux
 			return false;
 		}
 
-		for (UINT32 i = 0; i < MAX_SUBMIX_VOICES; ++i)
+		UINT32 rate = 44100;
+		UINT32 stage = 0;
+
+		if (!create_submix_voice(&(audio->submix_voice_ambient), rate, stage++))
 		{
-			if (!create_submix_voice(audio->submix_voices + i, 44100, i))
-			{
-				return false;
-			}
+			return false;
 		}
 
+		if (!create_submix_voice(&(audio->submix_voice_effects), rate, stage++))
+		{
+			return false;
+		}
+
+		if (!create_submix_voice(&(audio->submix_voice_speech), rate, stage++))
+		{
+			return false;
+		}
+
+		if (!create_submix_voice(&(audio->submix_voice_music), rate, stage++))
+		{
+			return false;
+		}
+
+		audio->caps.max_buffer_size = XAUDIO2_MAX_BUFFER_BYTES;
+		audio->caps.min_sample_rate = XAUDIO2_MIN_SAMPLE_RATE;
+		audio->caps.max_sample_rate = XAUDIO2_MAX_SAMPLE_RATE;
 		return true;
 	}
 
@@ -107,12 +154,10 @@ namespace aux
 			if (audio->device != nullptr)
 			{
 				audio->device->StartEngine();
-
-				for (UINT32 i = 0; i < MAX_SUBMIX_VOICES; ++i)
-				{
-					safe_release(audio->submix_voices[(UINT32)MAX_SUBMIX_VOICES - i - 1]);
-				}
-
+				safe_release(audio->submix_voice_music);
+				safe_release(audio->submix_voice_speech);
+				safe_release(audio->submix_voice_effects);
+				safe_release(audio->submix_voice_ambient);
 				safe_release(audio->master_voice);
 				audio->device->Release();
 			}

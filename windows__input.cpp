@@ -692,11 +692,11 @@ namespace aux
 
 	void place_mouse(const point2_t& pos)
 	{
-		POINT cp = {(LONG)pos.x, (LONG)pos.y};
+		POINT cursor_pos = {(LONG)pos.x, (LONG)pos.y};
 
-		if (ClientToScreen(input->window, &cp))
+		if (ClientToScreen(input->window, &cursor_pos))
 		{
-			SetCursorPos((int)cp.x, (int)cp.y);
+			SetCursorPos((int)cursor_pos.x, (int)cursor_pos.y);
 		}
 	}
 
@@ -752,12 +752,12 @@ namespace aux
 		free_mem(cursor);
 	}
 
-	void set_cursor(cursor_t* cursor)
+	void select_cursor(cursor_t* cursor)
 	{
 		set_current_cursor(cursor->handle);
 	}
 
-	void set_default_cursor()
+	void select_default_cursor()
 	{
 		set_current_cursor(input->default_cursor);
 	}

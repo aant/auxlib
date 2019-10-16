@@ -1,8 +1,8 @@
 #pragma once
 
-#include "color.h"
 #include "point2.h"
 #include "size2.h"
+#include "color4.h"
 
 namespace aux
 {
@@ -117,8 +117,8 @@ namespace aux
 
 	const graphics_caps_t& get_graphics_caps();
 
-	void clear_frame(const color_t& color, f32_t depth);
-	void clear_frame_color(const color_t& color);
+	void clear_frame(const color4_t& color, f32_t depth);
+	void clear_frame_color(const color4_t& color);
 	void clear_frame_depth(f32_t depth);
 	void present_frame();
 	void toggle_frame_sync(bool on);

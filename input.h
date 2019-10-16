@@ -174,8 +174,8 @@ namespace aux
 
 	cursor_t* create_cursor(const size2_t& size, const point2_t& hot_spot, const void* data);
 	void destroy_cursor(cursor_t* cursor);
-	void set_cursor(cursor_t* cursor);
-	void set_default_cursor();
+	void select_cursor(cursor_t* cursor);
+	void select_default_cursor();
 
 	extern input_handler_t input_handler;
 }

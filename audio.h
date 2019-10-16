@@ -18,6 +18,14 @@ namespace aux
 	struct sound_buffer_t;
 	struct sound_t;
 
+	struct music_handler_t
+	{
+		void* user_ptr;
+		i64_t total_data_size;
+		u32_t(*on_read)(void* user_ptr, u32_t size, void* data);
+		bool(*on_seek)(void* user_ptr, e32_t origin, i64_t offset);
+	};
+
 	struct audio_caps_t
 	{
 		i32_t max_buffer_size;
@@ -27,7 +35,7 @@ namespace aux
 
 	void get_audio_caps(audio_caps_t& caps);
 
-	f32_t get_sound_group_gain(e32_t group);
+	/*f32_t get_sound_group_gain(e32_t group);
 	void set_sound_group_gain(e32_t group, f32_t gain);
 	void suspend_sound_group(e32_t group);
 	void resume_sound_group(e32_t group);
@@ -44,5 +52,5 @@ namespace aux
 	void set_sound_buffer(sound_t* sound, sound_buffer_t* buffer);
 	void play_sound(sound_t* sound);
 	void stop_sound(sound_t* sound);
-	void loop_sound(sound_t* sound);
+	void loop_sound(sound_t* sound);*/
 }

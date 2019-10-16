@@ -94,13 +94,8 @@ namespace aux
 		(void)result;
 	}
 
-	static bool check_for_critical_error(HRESULT result)
+	static void check_for_critical_error(HRESULT result)
 	{
-		if (SUCCEEDED(result))
-		{
-			return true;
-		}
-
 		switch (result)
 		{
 			case E_OUTOFMEMORY:
@@ -125,8 +120,6 @@ namespace aux
 				handle_critical_error(L"Video device lost (Remote device).", result);
 				break;
 		}
-
-		return false;
 	}
 
 	static void safe_release(IUnknown* unk)
@@ -184,10 +177,10 @@ namespace aux
 		IDXGIFactory* factory;
 		HRESULT result = create_dxgi_factory(IID_IDXGIFactory, (void**)&factory);
 		FreeLibrary(lib);
-		check_for_critical_error(result);
 
 		if (FAILED(result))
 		{
+			check_for_critical_error(result);
 			return false;
 		}
 
@@ -608,13 +601,13 @@ namespace aux
 		return graphics->caps;
 	}
 
-	void clear_frame(const color_t& color, f32_t depth)
+	void clear_frame(const color4_t& color, f32_t depth)
 	{
 		graphics->device->ClearRenderTargetView(graphics->render_target, (const FLOAT*)&color);
 		graphics->device->ClearDepthStencilView(graphics->depth_stencil, D3D10_CLEAR_DEPTH, depth, 0);
 	}
 
-	void clear_frame_color(const color_t& color)
+	void clear_frame_color(const color4_t& color)
 	{
 		graphics->device->ClearRenderTargetView(graphics->render_target, (const FLOAT*)&color);
 	}
